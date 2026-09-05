@@ -53,8 +53,8 @@ export default function BuyerKatalog({ onNavigateToOrders }) {
                 item.grade_spec?.grade === 'A'
                   ? '12.5% (Kering Oven)'
                   : item.grade_spec?.grade === 'B'
-                  ? '18.0% (Kering Alami)'
-                  : '22.0% (Kadar Air Standar)',
+                  ? '20.0% (Lembap Standar)'
+                  : '>30% (Basah Segar Alami)',
               totalVolumeKg: item.available_quantity || 0,
               radiusKm: item.approx_radius_km || 0,
               status: item.status === 'active' ? 'Siap Dijual' : 'Menunggu Agregasi',

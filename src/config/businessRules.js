@@ -63,31 +63,13 @@ export const ECONOMIC_PRICE_TABLE = {
 export function calculateAutomaticGrade(kering, bebasKontaminasi, berat) {
   const kontaminasi = !bebasKontaminasi; // convert to contamination flag
 
-  if (kering === true && kontaminasi === false && berat >= GRADING_THRESHOLDS.WEIGHT_GRADE_A) {
-    return {
-      grade: 'A',
-      status: 'Lolos (Kualitas Utama)',
-      badgeColor: '#059669',
-      bgColor: '#ecfdf5',
-      borderColor: '#10b981',
-      reason: 'Material kering sempurna (≤15%), bebas kontaminasi, dan memenuhi volume minimal Grade A (≥100 kg).'
-    };
-  } else if ((kering === true || kontaminasi === false) && berat >= GRADING_THRESHOLDS.WEIGHT_GRADE_B) {
-    return {
-      grade: 'B',
-      status: 'Lolos (Kualitas Standar)',
-      badgeColor: '#2563eb',
-      bgColor: '#eff6ff',
-      borderColor: '#3b82f6',
-      reason: 'Memenuhi salah satu standar kebersihan/kering dasar dengan volume memadai (≥30 kg).'
-    };
-  } else if (berat < GRADING_THRESHOLDS.WEIGHT_GRADE_B || (kering === false && kontaminasi === true)) {
+  if (berat < GRADING_THRESHOLDS.WEIGHT_GRADE_B || (kering === false && kontaminasi === true)) {
     let rejectionReasons = [];
     if (berat < GRADING_THRESHOLDS.WEIGHT_GRADE_B) {
       rejectionReasons.push(`Berat material (${berat} kg) kurang dari batas minimum agregasi 30 kg`);
     }
     if (kering === false && kontaminasi === true) {
-      rejectionReasons.push('Material basah/menggumpal serta terindikasi kontaminasi asing (plastik/logam/tanah)');
+      rejectionReasons.push('Material basah serta terindikasi kontaminasi asing (plastik/logam/tanah)');
     }
     return {
       grade: 'ditolak',
@@ -97,14 +79,34 @@ export function calculateAutomaticGrade(kering, bebasKontaminasi, berat) {
       borderColor: '#f87171',
       reason: rejectionReasons.join('. ') || 'Material tidak memenuhi batas minimum kualitas.'
     };
-  } else {
+  }
+
+  if (kering === true && kontaminasi === false && berat >= GRADING_THRESHOLDS.WEIGHT_GRADE_A) {
     return {
-      grade: 'C',
-      status: 'Lolos (Kualitas Dasar)',
+      grade: 'A',
+      status: 'Lolos (Grade A – Kering Oven)',
+      badgeColor: '#059669',
+      bgColor: '#ecfdf5',
+      borderColor: '#10b981',
+      reason: 'Material kering oven (≤15%), bebas kontaminasi, cocok untuk ekspor pelet & briket arang.'
+    };
+  } else if (kering === true && berat >= GRADING_THRESHOLDS.WEIGHT_GRADE_B) {
+    return {
+      grade: 'B',
+      status: 'Lolos (Grade B – Lembap Standar)',
       badgeColor: '#d97706',
       bgColor: '#fffbe6',
       borderColor: '#f59e0b',
-      reason: 'Limbah kategori lembap atau kualitas dasar (Grade C).'
+      reason: 'Kadar air lembap (16–30%), cocok untuk pembakaran bata merah & pabrik semen.'
+    };
+  } else {
+    return {
+      grade: 'C',
+      status: 'Lolos (Grade C – Basah Segar)',
+      badgeColor: '#2563eb',
+      bgColor: '#eff6ff',
+      borderColor: '#3b82f6',
+      reason: 'Material basah segar alami (>30%) bebas zat kimia, sangat cocok untuk media budidaya jamur & kompos.'
     };
   }
 }

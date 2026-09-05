@@ -358,6 +358,56 @@ class Database {
       photos: [],
     });
 
+    const list5 = this.material_listings.create({
+      id: 'list-005',
+      company_id: sup2.id,
+      category_id: catWoodSawdust.id,
+      title: 'Serbuk Gergaji Basah Segar Alami (Grade C)',
+      description: 'Serbuk kayu basah alami dari potongan kayu segar, kadar air >30%, ideal untuk media baglog budidaya jamur & kompos organik.',
+      grade_spec: {
+        grade: 'C',
+        is_dry: false,
+        is_clean: true,
+        evaluated_reason: 'Kondisi basah segar alami (>30%), bebas resin & bahan kimia pengawet',
+        co2e_saved_kg: 625.0,
+      },
+      available_quantity: 500.0,
+      initial_quantity: 500.0,
+      unit: 'kg',
+      price_per_unit: 250.0,
+      frequency: 'weekly',
+      latitude: sup2.latitude,
+      longitude: sup2.longitude,
+      city: sup2.city,
+      status: 'active',
+      photos: [],
+    });
+
+    const list6 = this.material_listings.create({
+      id: 'list-006',
+      company_id: sup3.id,
+      category_id: catWoodBark.id,
+      title: 'Residu Sawmill Basah Alami (Grade C)',
+      description: 'Limbah kupasan sawmill basah kadar air 35%, siap olah pupuk kompos organik & media tanam pertanian.',
+      grade_spec: {
+        grade: 'C',
+        is_dry: false,
+        is_clean: true,
+        evaluated_reason: 'Kadar air tinggi basah (>30%), cocok untuk fermentasi kompos dan biomasa lembap',
+        co2e_saved_kg: 380.0,
+      },
+      available_quantity: 400.0,
+      initial_quantity: 400.0,
+      unit: 'kg',
+      price_per_unit: 180.0,
+      frequency: 'monthly',
+      latitude: sup3.latitude,
+      longitude: sup3.longitude,
+      city: sup3.city,
+      status: 'active',
+      photos: [],
+    });
+
     // 5. Buying Request
     const buyingReq = this.buying_requests.create({
       id: 'req-001',

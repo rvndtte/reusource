@@ -24,21 +24,23 @@ const CO2E_FACTOR_TABLE = {
 function serverCalculateGrade(isDry, isClean, weight) {
   const kontaminasi = !isClean;
 
-  if (isDry === true && kontaminasi === false && weight >= WEIGHT_THRESHOLD_GRADE_A) {
-    return { grade: 'A', reason: 'Kering sempurna, bebas kontaminasi, volume >= 100 kg' };
-  } else if ((isDry === true || kontaminasi === false) && weight >= WEIGHT_THRESHOLD_GRADE_B) {
-    return { grade: 'B', reason: 'Memenuhi standar kering/kebersihan dasar dengan volume >= 30 kg' };
-  } else if (weight < WEIGHT_THRESHOLD_GRADE_B || (isDry === false && kontaminasi === true)) {
+  if (weight < WEIGHT_THRESHOLD_GRADE_B || (isDry === false && kontaminasi === true)) {
     const reasons = [];
     if (weight < WEIGHT_THRESHOLD_GRADE_B) {
       reasons.push(`Berat (${weight} kg) di bawah batas minimum agregasi 30 kg`);
     }
     if (isDry === false && kontaminasi === true) {
-      reasons.push('Material basah dan terakumulasi kontaminasi');
+      reasons.push('Material basah dan terakumulasi kontaminasi kotoran/logam');
     }
     return { grade: 'ditolak', reason: reasons.join('. ') || 'Material ditolak' };
+  }
+
+  if (isDry === true && isClean === true && weight >= WEIGHT_THRESHOLD_GRADE_A) {
+    return { grade: 'A', reason: 'Kering oven (≤15%), bebas kontaminasi, cocok untuk ekspor pelet & briket arang' };
+  } else if (isDry === true || (isDry === false && isClean === false)) {
+    return { grade: 'B', reason: 'Kadar air lembap standar (16–30%), cocok untuk bata merah & semen' };
   } else {
-    return { grade: 'C', reason: 'Limbah kategori lembap/standar dasar (Grade C)' };
+    return { grade: 'C', reason: 'Basah segar alami (>30%) bebas bahan kimia, ideal untuk budidaya jamur & kompos' };
   }
 }
 
