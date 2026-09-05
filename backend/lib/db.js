@@ -128,7 +128,7 @@ class Database {
     // 2. Demo Companies (Approved)
     const sup1 = this.companies.create({
       id: 'comp-sup-001',
-      name: 'UD Kayu Lestari Cimahi (Demo Supplier)',
+      name: 'UD Kayu Lestari Cimahi',
       company_type: 'umkm_supplier',
       nib_npwp: '9120001234567',
       address: 'Jl. Raya Cimahi No. 45',
@@ -142,9 +142,25 @@ class Database {
       is_first_time_seller: 'false',
     });
 
+    const sup2 = this.companies.create({
+      id: 'comp-sup-002',
+      name: 'UD Banda Biomassa Neira',
+      company_type: 'umkm_supplier',
+      nib_npwp: '9120008877665',
+      address: 'Jl. Pelabuhan Nusantara No. 8',
+      city: 'Banda Neira',
+      province: 'Maluku',
+      latitude: -4.5262,
+      longitude: 129.9042,
+      verification_status: 'approved',
+      verification_notes: 'Dokumen legalitas & audit lokasi fisik valid.',
+      is_micro_business: 'true',
+      is_first_time_seller: 'false',
+    });
+
     const buyer1 = this.companies.create({
       id: 'comp-buy-001',
-      name: 'PT Biomassa Nusantara Energi (Demo Buyer)',
+      name: 'PT Biomassa Nusantara Energi (Pabrik Pelet)',
       company_type: 'enterprise_buyer',
       nib_npwp: '013456789012000',
       address: 'Kawasan Industri Jababeka 5, Cikarang',
@@ -174,7 +190,7 @@ class Database {
       id: 'usr-demo-sup',
       email: 'test@supplier.com',
       password_hash: DEMO_PASSWORD_HASH,
-      full_name: 'Demo Supplier Bengkel',
+      full_name: 'Budi Santoso (Supplier Cimahi)',
       phone: '081234567891',
       role: 'supplier_admin',
       company_id: sup1.id,
@@ -182,17 +198,28 @@ class Database {
     });
 
     this.users.create({
+      id: 'usr-demo-sup2',
+      email: 'supplier.banda@reusource.id',
+      password_hash: DEMO_PASSWORD_HASH,
+      full_name: 'Hasan Banda (Supplier Neira)',
+      phone: '081298765432',
+      role: 'supplier_admin',
+      company_id: sup2.id,
+      is_active: true,
+    });
+
+    this.users.create({
       id: 'usr-demo-buy',
       email: 'test@buyer.com',
       password_hash: DEMO_PASSWORD_HASH,
-      full_name: 'Demo Buyer Pabrik',
+      full_name: 'Sarah Wijaya (Buyer Pabrik)',
       phone: '081234567892',
       role: 'buyer_admin',
       company_id: buyer1.id,
       is_active: true,
     });
 
-    // 4. Material Listings (Hanya 1 Data Pasokan Awal)
+    // 4. Material Listings (2 Supplier Serbuk Serutan Jati Grade A: Cimahi 650kg & Banda Neira 120kg)
     const list1 = this.material_listings.create({
       id: 'list-001',
       company_id: sup1.id,
@@ -214,6 +241,31 @@ class Database {
       latitude: sup1.latitude,
       longitude: sup1.longitude,
       city: sup1.city,
+      status: 'active',
+      photos: [],
+    });
+
+    const list2 = this.material_listings.create({
+      id: 'list-002',
+      company_id: sup2.id,
+      category_id: catWoodSawdust.id,
+      title: 'Serbuk Serutan Kayu Jati Banda (Grade A)',
+      description: 'Serbuk kayu jati alami kering pulau Banda Neira, kadar air 13.5%, siap olah briket/pelet.',
+      grade_spec: {
+        grade: 'A',
+        is_dry: true,
+        is_clean: true,
+        evaluated_reason: 'Kering alami, murni serat jati, volume >= 100 kg',
+        co2e_saved_kg: 150.0,
+      },
+      available_quantity: 120.0,
+      initial_quantity: 120.0,
+      unit: 'kg',
+      price_per_unit: 750.0,
+      frequency: 'weekly',
+      latitude: sup2.latitude,
+      longitude: sup2.longitude,
+      city: sup2.city,
       status: 'active',
       photos: [],
     });

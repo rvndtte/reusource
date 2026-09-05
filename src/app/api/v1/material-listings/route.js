@@ -30,6 +30,8 @@ export async function GET(request) {
         price_per_unit: l.price_per_unit,
         frequency: l.frequency,
         city: l.city,
+        latitude: l.latitude,
+        longitude: l.longitude,
         approx_radius_km: 0,
         status: l.status,
         created_at: l.created_at,

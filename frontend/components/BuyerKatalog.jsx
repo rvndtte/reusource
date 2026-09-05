@@ -6,13 +6,28 @@ import { buyerApi } from '../services/api';
 import { calculateCO2eImpact, calculateEconomicValue } from '../config/businessRules';
 import { LoadingSkeleton, EmptyState, ErrorState } from './common/UIStates';
 
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) return 25;
+  const R = 6371; // Radius of the earth in km
+  const dLat = ((Number(lat2) - Number(lat1)) * Math.PI) / 180;
+  const dLon = ((Number(lon2) - Number(lon1)) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((Number(lat1) * Math.PI) / 180) *
+      Math.cos((Number(lat2) * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.max(1, Math.round(R * c));
+}
+
 export default function BuyerKatalog({ onNavigateToOrders }) {
   const { user } = useAuth();
 
   // Filter States
   const [filterType, setFilterType] = useState('Semua');
   const [filterGrade, setFilterGrade] = useState('Semua');
-  const [filterRadius, setFilterRadius] = useState(25);
+  const [filterRadius, setFilterRadius] = useState(3000);
   const [filterStatus, setFilterStatus] = useState('Semua');
 
   // Backend Clusters List State
@@ -37,12 +52,23 @@ export default function BuyerKatalog({ onNavigateToOrders }) {
           (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
         );
 
+        const buyerLat = user?.latitude ?? -6.3005;
+        const buyerLng = user?.longitude ?? 107.169;
+
         setClusters(
           sorted.map((item, _idx) => {
             const isFresh = Boolean(
               item.created_at &&
                 Date.now() - new Date(item.created_at).getTime() < 24 * 3600 * 1000
             );
+
+            const distKm = getDistanceFromLatLonInKm(
+              buyerLat,
+              buyerLng,
+              item.latitude ?? -6.8722,
+              item.longitude ?? 107.5422
+            );
+
             return {
               id: `KLS-${item.id.slice(0, 6)}`,
               realId: item.id,
@@ -56,7 +82,7 @@ export default function BuyerKatalog({ onNavigateToOrders }) {
                   ? '20.0% (Lembap Standar)'
                   : '>30% (Basah Segar Alami)',
               totalVolumeKg: item.available_quantity || 0,
-              radiusKm: item.approx_radius_km || 0,
+              radiusKm: distKm,
               status: item.status === 'active' ? 'Siap Dijual' : 'Menunggu Agregasi',
               umkmCount: 1,
               locationName: item.city || 'Indonesia',
@@ -75,7 +101,7 @@ export default function BuyerKatalog({ onNavigateToOrders }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user?.latitude, user?.longitude]);
 
   useEffect(() => {
     loadListings();
@@ -219,13 +245,15 @@ export default function BuyerKatalog({ onNavigateToOrders }) {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.35rem' }}>
             <span>Radius Jangkauan:</span>
-            <span style={{ color: 'var(--primary-blue)' }}>≤ {filterRadius} km</span>
+            <span style={{ color: 'var(--primary-blue)', fontWeight: 800 }}>
+              {filterRadius >= 3000 ? 'Semua Jarak (Nasional)' : `≤ ${filterRadius} km`}
+            </span>
           </div>
           <input
             type="range"
-            min="5"
-            max="25"
-            step="1"
+            min="10"
+            max="3000"
+            step="25"
             value={filterRadius}
             onChange={(e) => setFilterRadius(Number(e.target.value))}
             style={{ width: '100%', accentColor: 'var(--primary-blue)', cursor: 'pointer' }}

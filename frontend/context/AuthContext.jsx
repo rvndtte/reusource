@@ -80,8 +80,15 @@ export function AuthProvider({ children }) {
   const isBuyer = role === 'buyer_admin' || role === 'buyer';
   const isAdmin = role === 'admin' || role === 'verifier';
 
+  const updateUserProfile = async (payload) => {
+    const updated = await authApi.updateProfile(payload);
+    setUser(updated);
+    return updated;
+  };
+
   const value = {
     user,
+    setUser,
     token,
     role,
     isSupplier,
@@ -93,6 +100,7 @@ export function AuthProvider({ children }) {
     loginWithOtp,
     registerWithOtp,
     registerWithEmail,
+    updateUserProfile,
     logout,
   };
 

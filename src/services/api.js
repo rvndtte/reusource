@@ -69,6 +69,12 @@ export const authApi = {
     }),
 
   getMe: () => request('/auth/me'),
+
+  updateProfile: (payload) =>
+    request('/auth/me', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
 };
 
 // 2. SUPPLIER APIS (Prioritas 4)

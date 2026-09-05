@@ -25,36 +25,8 @@ export default function BuyerOrders({ onSwitchToKatalog }) {
           setSelectedOrder(res[0]);
         }
       } else {
-        // Default demo order for rich UI experience
-        const defaultOrders = [
-          {
-            id: 'PO-2026-0901',
-            created_at: new Date().toISOString(),
-            order_status: 'in_delivery',
-            total_amount: 263680,
-            platform_fee: 7680,
-            items: [
-              {
-                listing_title: 'Serbuk Serutan Kayu Jati (Grade A)',
-                supplier_company_name: 'UD Kayu Lestari Cimahi',
-                quantity: 320,
-                unit_price: 800,
-                subtotal: 256000,
-              }
-            ],
-            delivery_info: {
-              driver_name: 'Bambang S. (Armada Truk Milk-Run #04)',
-              truck_plate: 'D 8912 AB',
-              est_arrival: 'Hari Ini, 16:30 WIB',
-              route: 'Sentra Bengkel Cimahi → Hub Agregasi → Pabrik Pembeli',
-              current_checkpoint: 'Transit Hub Agregasi Wilayah Barat (QC Passed)',
-              moisture_tested: '12.2% (Standar Grade A terpenuhi)',
-              co2_avoided_kg: 400.0,
-            }
-          }
-        ];
-        setOrders(defaultOrders);
-        setSelectedOrder(defaultOrders[0]);
+        setOrders([]);
+        setSelectedOrder(null);
       }
     } catch (err) {
       console.error('Failed to load orders:', err);

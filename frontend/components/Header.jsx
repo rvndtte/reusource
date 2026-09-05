@@ -1,5 +1,8 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import AccountProfileModal from './AccountProfileModal';
 
 const NAV_ITEMS = [
   { id: 'hero-section', label: 'Beranda' },
@@ -15,6 +18,7 @@ export default function Header({
 }) {
   const { user, isSupplier, isBuyer, isAdmin, isAuthenticated, logout } = useAuth();
   const [activeNav, setActiveNav] = useState('hero-section');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Track active section on scroll for guest landing page
   useEffect(() => {
@@ -62,70 +66,103 @@ export default function Header({
   // --------------------------------------------------------------------------
   if (isAuthenticated && isSupplier) {
     return (
-      <header style={{
-        backgroundColor: '#ffffff',
-        borderBottom: '2px solid #059669',
-        padding: '0.85rem 2rem',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        boxShadow: '0 4px 14px rgba(5, 150, 105, 0.08)'
-      }}>
-        <div style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '1rem'
+      <>
+        <header style={{
+          backgroundColor: '#ffffff',
+          borderBottom: '2px solid #059669',
+          padding: '0.85rem 2rem',
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          boxShadow: '0 4px 14px rgba(5, 150, 105, 0.08)'
         }}>
-          {/* Brand & Supplier Badge */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-dark)' }}>
-                ReuSource Pemasok
-              </div>
-              <span style={{
-                fontSize: '0.68rem',
-                fontWeight: 800,
-                backgroundColor: '#ecfdf5',
-                color: '#059669',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                border: '1px solid #a7f3d0'
-              }}>
-                PORTAL SUPPLIER
-              </span>
-            </div>
-            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-              {user?.company_name || 'Perusahaan Anda'} ({user?.full_name || 'Pengguna'})
-            </div>
-          </div>
-
-          {/* Supplier Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#059669' }}>
-              Setor Stok & Kluster Wilayah
-            </span>
-            <button
-              onClick={logout}
-              style={{
-                padding: '0.45rem 0.95rem',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                borderRadius: '6px',
-                backgroundColor: '#fef2f2',
-                color: '#ef4444',
-                border: '1px solid #fecaca',
-                cursor: 'pointer',
-              }}
+          <div style={{
+            maxWidth: '1280px',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            {/* Brand & Supplier Badge */}
+            <div
+              onClick={() => setIsProfileOpen(true)}
+              style={{ cursor: 'pointer' }}
+              title="Klik untuk melihat dan edit data profil"
             >
-              Keluar
-            </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-dark)' }}>
+                  ReuSource Pemasok
+                </div>
+                <span style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  backgroundColor: '#ecfdf5',
+                  color: '#059669',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  border: '1px solid #a7f3d0'
+                }}>
+                  PORTAL SUPPLIER
+                </span>
+              </div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                {user?.company_name || 'Perusahaan Anda'} ({user?.full_name || 'Pengguna'})
+              </div>
+            </div>
+
+            {/* Supplier Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#059669', marginRight: '0.25rem' }}>
+                Setor Stok & Kluster Wilayah
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen(true)}
+                style={{
+                  padding: '0.45rem 0.95rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  borderRadius: '6px',
+                  backgroundColor: '#f1f5f9',
+                  color: 'var(--text-dark)',
+                  border: '1px solid var(--card-border)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                ⚙ Profil &amp; Akun
+              </button>
+
+              <button
+                type="button"
+                onClick={logout}
+                style={{
+                  padding: '0.45rem 0.95rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  borderRadius: '6px',
+                  backgroundColor: '#fef2f2',
+                  color: '#ef4444',
+                  border: '1px solid #fecaca',
+                  cursor: 'pointer',
+                }}
+              >
+                Keluar
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+
+        <AccountProfileModal
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+        />
+      </>
     );
   }
 
@@ -134,113 +171,148 @@ export default function Header({
   // --------------------------------------------------------------------------
   if (isAuthenticated && isBuyer) {
     return (
-      <header style={{
-        backgroundColor: '#ffffff',
-        borderBottom: '2px solid #2563eb',
-        padding: '0.85rem 2rem',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)'
-      }}>
-        <div style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '1rem'
+      <>
+        <header style={{
+          backgroundColor: '#ffffff',
+          borderBottom: '2px solid #2563eb',
+          padding: '0.85rem 2rem',
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)'
         }}>
-          {/* Brand & Buyer Badge */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-dark)' }}>
-                ReuSource Pembeli
+          <div style={{
+            maxWidth: '1280px',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            {/* Brand & Buyer Badge */}
+            <div
+              onClick={() => setIsProfileOpen(true)}
+              style={{ cursor: 'pointer' }}
+              title="Klik untuk melihat dan edit data profil"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-dark)' }}>
+                  ReuSource Pembeli
+                </div>
+                <span style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  backgroundColor: '#eff6ff',
+                  color: '#2563eb',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  border: '1px solid #bfdbfe'
+                }}>
+                  PORTAL BUYER
+                </span>
               </div>
-              <span style={{
-                fontSize: '0.68rem',
-                fontWeight: 800,
-                backgroundColor: '#eff6ff',
-                color: '#2563eb',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                border: '1px solid #bfdbfe'
-              }}>
-                PORTAL BUYER
-              </span>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                {user?.company_name || 'Perusahaan Anda'} ({user?.full_name || 'Pengguna'})
+              </div>
             </div>
-            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-              {user?.company_name || 'Perusahaan Anda'} ({user?.full_name || 'Pengguna'})
+
+            {/* Buyer Navigation Sub-Tabs */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.85rem', fontWeight: 700 }}>
+              <button
+                type="button"
+                onClick={() => onSwitchBuyerTab && onSwitchBuyerTab('katalog')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: buyerTab === 'katalog' ? '#2563eb' : 'var(--text-muted)',
+                  borderBottom: buyerTab === 'katalog' ? '2.5px solid #2563eb' : '2.5px solid transparent',
+                  paddingBottom: '4px',
+                  fontWeight: 700
+                }}
+              >
+                Katalog Pasokan
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onSwitchBuyerTab && onSwitchBuyerTab('permintaan')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: buyerTab === 'permintaan' ? '#2563eb' : 'var(--text-muted)',
+                  borderBottom: buyerTab === 'permintaan' ? '2.5px solid #2563eb' : '2.5px solid transparent',
+                  paddingBottom: '4px',
+                  fontWeight: 700
+                }}
+              >
+                Request Kebutuhan
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onSwitchBuyerTab && onSwitchBuyerTab('pesanan')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: buyerTab === 'pesanan' ? '#2563eb' : 'var(--text-muted)',
+                  borderBottom: buyerTab === 'pesanan' ? '2.5px solid #2563eb' : '2.5px solid transparent',
+                  paddingBottom: '4px',
+                  fontWeight: 700
+                }}
+              >
+                Pantau Pesanan &amp; Logistik
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen(true)}
+                style={{
+                  padding: '0.45rem 0.95rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  borderRadius: '6px',
+                  backgroundColor: '#eff6ff',
+                  color: '#2563eb',
+                  border: '1px solid #bfdbfe',
+                  cursor: 'pointer',
+                  marginLeft: '0.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                ⚙ Profil &amp; Akun
+              </button>
+
+              <button
+                type="button"
+                onClick={logout}
+                style={{
+                  padding: '0.45rem 0.95rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  borderRadius: '6px',
+                  backgroundColor: '#fef2f2',
+                  color: '#ef4444',
+                  border: '1px solid #fecaca',
+                  cursor: 'pointer',
+                }}
+              >
+                Keluar
+              </button>
             </div>
           </div>
+        </header>
 
-          {/* Buyer Navigation Sub-Tabs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.85rem', fontWeight: 700 }}>
-            <button
-              onClick={() => onSwitchBuyerTab && onSwitchBuyerTab('katalog')}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: buyerTab === 'katalog' ? '#2563eb' : 'var(--text-muted)',
-                borderBottom: buyerTab === 'katalog' ? '2.5px solid #2563eb' : '2.5px solid transparent',
-                paddingBottom: '4px',
-                fontWeight: 700
-              }}
-            >
-              Katalog Pasokan
-            </button>
-
-            <button
-              onClick={() => onSwitchBuyerTab && onSwitchBuyerTab('permintaan')}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: buyerTab === 'permintaan' ? '#2563eb' : 'var(--text-muted)',
-                borderBottom: buyerTab === 'permintaan' ? '2.5px solid #2563eb' : '2.5px solid transparent',
-                paddingBottom: '4px',
-                fontWeight: 700
-              }}
-            >
-              Request Kebutuhan
-            </button>
-
-            <button
-              onClick={() => onSwitchBuyerTab && onSwitchBuyerTab('pesanan')}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: buyerTab === 'pesanan' ? '#2563eb' : 'var(--text-muted)',
-                borderBottom: buyerTab === 'pesanan' ? '2.5px solid #2563eb' : '2.5px solid transparent',
-                paddingBottom: '4px',
-                fontWeight: 700
-              }}
-            >
-              Pantau Pesanan &amp; Logistik
-            </button>
-
-            <button
-              onClick={logout}
-              style={{
-                padding: '0.45rem 0.95rem',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                borderRadius: '6px',
-                backgroundColor: '#fef2f2',
-                color: '#ef4444',
-                border: '1px solid #fecaca',
-                cursor: 'pointer',
-                marginLeft: '0.5rem',
-              }}
-            >
-              Keluar
-            </button>
-          </div>
-        </div>
-      </header>
+        <AccountProfileModal
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+        />
+      </>
     );
   }
 
@@ -249,70 +321,95 @@ export default function Header({
   // --------------------------------------------------------------------------
   if (isAuthenticated && isAdmin) {
     return (
-      <header style={{
-        backgroundColor: '#0f172a',
-        borderBottom: '2px solid #334155',
-        padding: '0.85rem 2rem',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        color: '#ffffff',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-      }}>
-        <div style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '1rem'
+      <>
+        <header style={{
+          backgroundColor: '#0f172a',
+          borderBottom: '2px solid #334155',
+          padding: '0.85rem 2rem',
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          color: '#ffffff',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
         }}>
-          {/* Brand & Admin Badge */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ fontWeight: 800, fontSize: '1.15rem', color: '#ffffff' }}>
-                Bylink Admin Console
+          <div style={{
+            maxWidth: '1280px',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            {/* Brand & Admin Badge */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ fontWeight: 800, fontSize: '1.15rem', color: '#ffffff' }}>
+                  Bylink Admin Console
+                </div>
+                <span style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                  color: '#f87171',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(239, 68, 68, 0.4)'
+                }}>
+                  INTERNAL SYSTEM (ISO 27001)
+                </span>
               </div>
-              <span style={{
-                fontSize: '0.68rem',
-                fontWeight: 800,
-                backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                color: '#f87171',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                border: '1px solid rgba(239, 68, 68, 0.4)'
-              }}>
-                INTERNAL SYSTEM (ISO 27001)
-              </span>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8' }}>
+                Verifier: {user?.full_name || 'Admin'} ({user?.email})
+              </div>
             </div>
-            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8' }}>
-              Verifier: {user?.full_name || 'Admin'} ({user?.email})
-            </div>
-          </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ color: '#38bdf8', fontSize: '0.82rem', fontWeight: 700 }}>
-              Verifikasi Akun Baru & Dashboard Ringkas
-            </span>
-            <button
-              onClick={logout}
-              style={{
-                padding: '0.45rem 0.95rem',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                borderRadius: '6px',
-                backgroundColor: '#1e293b',
-                color: '#ffffff',
-                border: '1px solid #475569',
-                cursor: 'pointer',
-              }}
-            >
-              Keluar Konsol
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen(true)}
+                style={{
+                  padding: '0.45rem 0.95rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  borderRadius: '6px',
+                  backgroundColor: '#1e293b',
+                  color: '#ffffff',
+                  border: '1px solid #475569',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                ⚙ Profil &amp; Akun
+              </button>
+
+              <button
+                type="button"
+                onClick={logout}
+                style={{
+                  padding: '0.45rem 0.95rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  borderRadius: '6px',
+                  backgroundColor: '#7f1d1d',
+                  color: '#ffffff',
+                  border: '1px solid #991b1b',
+                  cursor: 'pointer',
+                }}
+              >
+                Keluar Konsol
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+
+        <AccountProfileModal
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+        />
+      </>
     );
   }
 
@@ -384,6 +481,7 @@ export default function Header({
         {/* Auth Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <button
+            type="button"
             onClick={() => onOpenAuthModal && onOpenAuthModal('login')}
             style={{
               padding: '0.5rem 1.1rem',
@@ -400,6 +498,7 @@ export default function Header({
           </button>
 
           <button
+            type="button"
             onClick={() => onOpenAuthModal && onOpenAuthModal('register')}
             style={{
               padding: '0.5rem 1.25rem',
