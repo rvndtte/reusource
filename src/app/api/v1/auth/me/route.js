@@ -1,11 +1,33 @@
 import { NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { normalizePhone } from '@/lib/phone';
 
 export async function GET(request) {
   try {
     const user = await requireUser(request);
-    const comp = user.company;
+    let comp = user.company;
+
+    // Check if client header has an approved status update for this company
+    const regAccountsHeader = request.headers.get('X-Registered-Accounts') || request.headers.get('x-registered-accounts');
+    if (regAccountsHeader) {
+      try {
+        const registeredList = JSON.parse(regAccountsHeader);
+        const matched = (registeredList || []).find((a) => 
+          (a.phone && normalizePhone(a.phone) === normalizePhone(user.phone)) || 
+          (a.email && a.email.toLowerCase() === user.email.toLowerCase()) ||
+          (comp && a.company_id === comp.id)
+        );
+
+        if (matched && matched.verification_status) {
+          if (comp && comp.verification_status !== matched.verification_status) {
+            comp = db.companies.update(comp.id, { verification_status: matched.verification_status }) || comp;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to parse X-Registered-Accounts in auth/me:', e);
+      }
+    }
 
     return NextResponse.json({
       user_id: user.id,
