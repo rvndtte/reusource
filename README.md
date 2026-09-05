@@ -1,4 +1,4 @@
-# ReuSource by ByLink — B2B Industrial Biomass Supply Chain Network
+# ReuSource (Reusable Resource) — B2B Industrial Biomass Supply Chain Network
 
 Platform Agregasi Rantai Pasok Limbah Kayu & Biomassa Industri Terdesentralisasi B2B Berbasis Spasial (Spatial Clustering), Standar Mutu Berkelanjutan, dan Pelacakan Jejak Karbon (ESG LCA).
 
@@ -175,4 +175,4 @@ ByLink/ (Root Monorepo)
 ---
 
 ## 7. Kontribusi & Lisensi
-Dikembangkan oleh **Tim ByLink** untuk kompetisi inovasi teknologi rantai pasok industri hijau dan ekonomi sirkular terdesentralisasi di Indonesia.
+Dikembangkan untuk kompetisi inovasi teknologi rantai pasok industri hijau dan ekonomi sirkular terdesentralisasi di Indonesia.
