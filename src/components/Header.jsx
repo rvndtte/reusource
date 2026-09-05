@@ -1,7 +1,12 @@
-'use client';
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+
+const NAV_ITEMS = [
+  { id: 'hero-section', label: 'Beranda' },
+  { id: 'cara-kerja-section', label: 'Cara Kerja' },
+  { id: 'masalah-section', label: 'Tentang Kami' },
+  { id: 'fakta-sdg-section', label: 'Edukasi' },
+];
 
 export default function Header({
   buyerTab = 'katalog',
@@ -9,6 +14,48 @@ export default function Header({
   onOpenAuthModal
 }) {
   const { user, isSupplier, isBuyer, isAdmin, isAuthenticated, logout } = useAuth();
+  const [activeNav, setActiveNav] = useState('hero-section');
+
+  // Track active section on scroll for guest landing page
+  useEffect(() => {
+    if (isAuthenticated) return;
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 140;
+      for (let i = NAV_ITEMS.length - 1; i >= 0; i--) {
+        const item = NAV_ITEMS[i];
+        const section = document.getElementById(item.id);
+        if (section) {
+          const top = section.offsetTop;
+          if (scrollPosition >= top) {
+            setActiveNav(item.id);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isAuthenticated]);
+
+  const handleNavClick = (e, sectionId) => {
+    e.preventDefault();
+    setActiveNav(sectionId);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const offset = 80;
+      const bodyRect = document.body.getBoundingClientRect().top;
+      const elementRect = element.getBoundingClientRect().top;
+      const elementPosition = elementRect - bodyRect;
+      const offsetPosition = elementPosition - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // --------------------------------------------------------------------------
   // 1. SUPPLIER PORTAL HEADER (Strict RBAC for Supplier Role)
@@ -303,7 +350,7 @@ export default function Header({
           </div>
         </div>
 
-        {/* Center Nav Links for Landing Page */}
+        {/* Center Nav Links for Landing Page (Dynamic Active State & Scroll Spy) */}
         <nav style={{
           display: 'flex',
           alignItems: 'center',
@@ -311,10 +358,27 @@ export default function Header({
           fontSize: '0.88rem',
           fontWeight: 600
         }}>
-          <a href="#hero-section" style={{ color: 'var(--primary-green)', textDecoration: 'none', borderBottom: '2px solid var(--primary-green)', paddingBottom: '4px' }}>Beranda</a>
-          <a href="#cara-kerja-section" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Cara Kerja</a>
-          <a href="#masalah-section" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Tentang Kami</a>
-          <a href="#fakta-sdg-section" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Edukasi</a>
+          {NAV_ITEMS.map((item) => {
+            const isActive = activeNav === item.id;
+            return (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                onClick={(e) => handleNavClick(e, item.id)}
+                style={{
+                  color: isActive ? 'var(--primary-green)' : 'var(--text-muted)',
+                  textDecoration: 'none',
+                  borderBottom: isActive ? '2.5px solid var(--primary-green)' : '2.5px solid transparent',
+                  paddingBottom: '4px',
+                  fontWeight: isActive ? 800 : 600,
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer'
+                }}
+              >
+                {item.label}
+              </a>
+            );
+          })}
         </nav>
 
         {/* Auth Buttons */}
