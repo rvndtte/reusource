@@ -8,7 +8,7 @@ export async function GET(request) {
     const user = await requireUser(request);
     let comp = user.company;
 
-    // Check if client header has an approved status update for this company
+    // Check if client header has an updated status for this company
     const regAccountsHeader = request.headers.get('X-Registered-Accounts') || request.headers.get('x-registered-accounts');
     if (regAccountsHeader) {
       try {
@@ -29,6 +29,10 @@ export async function GET(request) {
       }
     }
 
+    // Determine status: Admin is always approved; demo seeded accounts are approved; any new account is pending_verification
+    const isSeedApproved = ['comp-sup-cimahi', 'comp-sup-banda', 'comp-buy-nusantara'].includes(user.company_id) || user.role === 'admin';
+    const finalVerificationStatus = comp?.verification_status || (isSeedApproved ? 'approved' : 'pending_verification');
+
     return NextResponse.json({
       user_id: user.id,
       email: user.email,
@@ -45,7 +49,7 @@ export async function GET(request) {
       longitude: comp?.longitude || 106.8456,
       nib: comp?.nib || '',
       npwp: comp?.npwp || '',
-      verification_status: comp?.verification_status || 'approved',
+      verification_status: finalVerificationStatus,
       verification_notes: comp?.verification_notes || null,
     });
   } catch (error) {
@@ -103,6 +107,8 @@ export async function PUT(request) {
     // 3. Return updated profile
     const updatedUser = db.users.findById(user.id);
     const updatedComp = user.company_id ? db.companies.findById(user.company_id) : null;
+    const isSeedApproved = ['comp-sup-cimahi', 'comp-sup-banda', 'comp-buy-nusantara'].includes(updatedUser.company_id) || updatedUser.role === 'admin';
+    const finalVerificationStatus = updatedComp?.verification_status || (isSeedApproved ? 'approved' : 'pending_verification');
 
     return NextResponse.json({
       user_id: updatedUser.id,
@@ -120,7 +126,7 @@ export async function PUT(request) {
       longitude: updatedComp?.longitude || 106.8456,
       nib: updatedComp?.nib || '',
       npwp: updatedComp?.npwp || '',
-      verification_status: updatedComp?.verification_status || 'approved',
+      verification_status: finalVerificationStatus,
       verification_notes: updatedComp?.verification_notes || null,
       message: 'Profil dan data perusahaan berhasil diperbarui.',
     });
