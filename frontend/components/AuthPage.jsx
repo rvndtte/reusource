@@ -974,27 +974,20 @@ export default function AuthPage({ initialMode = 'register', onClose, onLoginSuc
                   <div style={{ fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
                     Nomor WhatsApp Uji Coba:
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                     <button
                       type="button"
                       onClick={() => setLoginPhone('081234567891')}
-                      style={{ padding: '5px', borderRadius: '4px', border: '1px solid #a7f3d0', backgroundColor: '#ecfdf5', color: '#047857', fontWeight: 700, cursor: 'pointer', fontSize: '0.72rem' }}
+                      style={{ padding: '6px', borderRadius: '6px', border: '1px solid #a7f3d0', backgroundColor: '#ecfdf5', color: '#047857', fontWeight: 700, cursor: 'pointer', fontSize: '0.75rem' }}
                     >
-                      Pemasok
+                      Pemasok (081234567891)
                     </button>
                     <button
                       type="button"
                       onClick={() => setLoginPhone('081234567892')}
-                      style={{ padding: '5px', borderRadius: '4px', border: '1px solid #bfdbfe', backgroundColor: '#eff6ff', color: '#1d4ed8', fontWeight: 700, cursor: 'pointer', fontSize: '0.72rem' }}
+                      style={{ padding: '6px', borderRadius: '6px', border: '1px solid #bfdbfe', backgroundColor: '#eff6ff', color: '#1d4ed8', fontWeight: 700, cursor: 'pointer', fontSize: '0.75rem' }}
                     >
-                      Pembeli
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLoginPhone('081199887766')}
-                      style={{ padding: '5px', borderRadius: '4px', border: '1px solid #fecaca', backgroundColor: '#fef2f2', color: '#b91c1c', fontWeight: 700, cursor: 'pointer', fontSize: '0.72rem' }}
-                    >
-                      Admin
+                      Pembeli (081234567892)
                     </button>
                   </div>
                 </div>

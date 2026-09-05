@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { createAccessToken } from '@/lib/auth';
+import { createAccessToken, hashPassword } from '@/lib/auth';
 import { verifyStoredOtp } from '@/lib/otpStore';
 import { normalizePhone } from '@/lib/phone';
 
@@ -20,7 +20,51 @@ export async function POST(request) {
       );
     }
 
-    const user = db.users.findOne((u) => normalizePhone(u.phone) === phone);
+    // 1. Try to find user in database
+    let user = db.users.findOne((u) => normalizePhone(u.phone) === phone);
+
+    // 2. If not found in memory (e.g. serverless cold start), ingest from client registered accounts header
+    if (!user) {
+      const regAccountsHeader = request.headers.get('X-Registered-Accounts') || request.headers.get('x-registered-accounts');
+      if (regAccountsHeader) {
+        try {
+          const registeredList = JSON.parse(regAccountsHeader);
+          const matched = (registeredList || []).find((a) => normalizePhone(a.phone) === phone);
+          if (matched) {
+            // Re-hydrate company and user into database
+            let comp = matched.company_id ? db.companies.findById(matched.company_id) : null;
+            if (!comp) {
+              comp = db.companies.create({
+                id: matched.company_id || undefined,
+                name: matched.company_name || 'Usaha Terdaftar',
+                company_type: matched.role === 'buyer_admin' ? 'enterprise_buyer' : 'umkm_supplier',
+                phone: phone,
+                address: matched.address || 'Indonesia',
+                city: matched.city || 'Indonesia',
+                province: matched.province || '',
+                latitude: matched.latitude || -6.2088,
+                longitude: matched.longitude || 106.8456,
+                verification_status: matched.verification_status || 'pending_verification',
+              });
+            }
+
+            const pwdHash = await hashPassword('wa_otp_secure_login');
+            user = db.users.create({
+              email: matched.email || `wa_${phone}@reusource.id`,
+              password_hash: pwdHash,
+              full_name: matched.full_name || 'Pengguna Terdaftar',
+              phone: phone,
+              role: matched.role || 'supplier_admin',
+              company_id: comp.id,
+              is_active: true,
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to parse X-Registered-Accounts in verify-otp-login:', e);
+        }
+      }
+    }
+
     if (!user) {
       return NextResponse.json(
         { detail: `Nomor WhatsApp (${rawPhone}) ini belum terdaftar di sistem. Silakan lakukan pendaftaran terlebih dahulu.` },

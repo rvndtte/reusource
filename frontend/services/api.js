@@ -1,17 +1,61 @@
 /**
  * Central API Client for ReuSource / Bylink Frontend
  * Connects directly to Next.js API Routes at /api/v1 (or NEXT_PUBLIC_API_URL)
+ * Includes persistent registry sync across Serverless / Cloud cold-starts.
  */
 
 const API_BASE_URL = typeof window !== 'undefined'
   ? (process.env.NEXT_PUBLIC_API_URL || '/api/v1')
   : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1');
 
+const STORAGE_KEY_ACCOUNTS = 'reusource_registered_accounts';
+
+export function getStoredAccounts() {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveStoredAccount(acc) {
+  if (typeof window === 'undefined' || !acc) return;
+  try {
+    const list = getStoredAccounts();
+    const filtered = list.filter((item) => item.phone !== acc.phone && item.email !== acc.email);
+    filtered.push(acc);
+    localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(filtered));
+  } catch (e) {
+    console.warn('Failed to save account to localStorage:', e);
+  }
+}
+
+export function updateStoredAccountStatus(companyId, status) {
+  if (typeof window === 'undefined') return;
+  try {
+    const list = getStoredAccounts();
+    const updated = list.map((item) => {
+      if (item.company_id === companyId) {
+        return { ...item, verification_status: status };
+      }
+      return item;
+    });
+    localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(updated));
+  } catch (e) {
+    console.warn('Failed to update account status in localStorage:', e);
+  }
+}
+
 async function request(endpoint, options = {}) {
   const token = typeof window !== 'undefined' ? localStorage.getItem('reusource_token') : null;
+  const accountsHeader = typeof window !== 'undefined' ? JSON.stringify(getStoredAccounts()) : '[]';
+
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    'X-Registered-Accounts': accountsHeader,
     ...options.headers,
   };
 
@@ -44,17 +88,38 @@ export const authApi = {
       body: JSON.stringify({ phone }),
     }),
 
-  verifyOtpRegister: (payload) =>
-    request('/auth/verify-otp-register', {
+  verifyOtpRegister: async (payload) => {
+    const res = await request('/auth/verify-otp-register', {
       method: 'POST',
       body: JSON.stringify(payload),
-    }),
+    });
+    if (res && res.phone) {
+      saveStoredAccount({
+        phone: res.phone,
+        email: res.email,
+        full_name: res.full_name,
+        role: res.role,
+        company_id: res.company_id,
+        company_name: res.company_name,
+        address: payload.address || 'Indonesia',
+        city: payload.city || 'Indonesia',
+        province: payload.province || '',
+        latitude: payload.latitude || -6.2088,
+        longitude: payload.longitude || 106.8456,
+        verification_status: res.verification_status || 'pending_verification',
+        created_at: new Date().toISOString(),
+      });
+    }
+    return res;
+  },
 
-  verifyOtpLogin: (payload) =>
-    request('/auth/verify-otp-login', {
+  verifyOtpLogin: async (payload) => {
+    const res = await request('/auth/verify-otp-login', {
       method: 'POST',
       body: JSON.stringify(payload),
-    }),
+    });
+    return res;
+  },
 
   loginEmail: (email, password) =>
     request('/auth/login', {
@@ -62,11 +127,30 @@ export const authApi = {
       body: JSON.stringify({ email, password }),
     }),
 
-  registerEmail: (payload) =>
-    request('/auth/register', {
+  registerEmail: async (payload) => {
+    const res = await request('/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
-    }),
+    });
+    if (res && res.email) {
+      saveStoredAccount({
+        phone: res.phone || payload.phone,
+        email: res.email,
+        full_name: res.full_name,
+        role: res.role,
+        company_id: res.company_id,
+        company_name: res.company_name,
+        address: payload.address || 'Indonesia',
+        city: payload.city || 'Indonesia',
+        province: payload.province || '',
+        latitude: payload.latitude || -6.2088,
+        longitude: payload.longitude || 106.8456,
+        verification_status: res.verification_status || 'pending_verification',
+        created_at: new Date().toISOString(),
+      });
+    }
+    return res;
+  },
 
   getMe: () => request('/auth/me'),
 
@@ -77,7 +161,7 @@ export const authApi = {
     }),
 };
 
-// 2. SUPPLIER APIS (Prioritas 4)
+// 2. SUPPLIER APIS
 export const supplierApi = {
   setorStok: (payload) =>
     request('/material-listings/setor-stok', {
@@ -90,53 +174,54 @@ export const supplierApi = {
   getMyListings: () => request('/material-listings/my-listings'),
 };
 
-// 3. BUYER APIS (Prioritas 5 & 6)
+// 3. BUYER APIS
 export const buyerApi = {
   getListings: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return request(`/material-listings${query ? `?${query}` : ''}`);
+    const q = new URLSearchParams(params).toString();
+    return request(`/material-listings${q ? `?${q}` : ''}`);
   },
 
-  createBuyingRequest: (companyId, payload) =>
-    request(`/buying-requests?company_id=${companyId}`, {
+  getSmartMatches: (requestId) =>
+    request(`/smart-matching/request/${requestId}`),
+
+  submitBuyingRequest: (payload) =>
+    request('/buying-requests', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
 
-  getBuyingRequests: (companyId) =>
-    request(`/buying-requests${companyId ? `?buyer_company_id=${companyId}` : ''}`),
+  getMyBuyingRequests: () => request('/buying-requests/my-requests'),
 
-  triggerMatching: (buyingRequestId, maxRadiusKm = 150) =>
-    request('/smart-matching/trigger', {
-      method: 'POST',
-      body: JSON.stringify({
-        buying_request_id: buyingRequestId,
-        max_radius_km: maxRadiusKm,
-      }),
-    }),
+  getOrders: (buyerCompanyId) => {
+    const q = buyerCompanyId ? `?buyer_company_id=${buyerCompanyId}` : '';
+    return request(`/orders${q}`);
+  },
 
-  getAggregationsForRequest: (buyingRequestId) =>
-    request(`/smart-matching/request/${buyingRequestId}`),
-
-  createOrder: (payload) =>
+  checkoutSupply: (payload) =>
     request('/orders', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
-
-  getOrders: (buyerCompanyId) =>
-    request(`/orders${buyerCompanyId ? `?buyer_company_id=${buyerCompanyId}` : ''}`),
 };
 
-// 4. ADMIN & VERIFICATION APIS (Prioritas 7)
+// 4. ADMIN & VERIFIER APIS
 export const adminApi = {
   getPendingAccounts: () => request('/verifications/pending-accounts'),
 
-  verifyAccount: (companyId, decision, adminNotes) =>
-    request(`/verifications/accounts/${companyId}/verify`, {
+  verifyAccount: async (companyId, decision, adminNotes = '') => {
+    const res = await request(`/verifications/accounts/${companyId}/verify`, {
       method: 'POST',
       body: JSON.stringify({ decision, admin_notes: adminNotes }),
-    }),
+    });
+    updateStoredAccountStatus(companyId, decision === 'approve' ? 'approved' : 'rejected');
+    return res;
+  },
 
   getImpactDashboard: () => request('/impact/dashboard'),
+
+  verifyOrderStep: (orderId, targetStatus) =>
+    request(`/verifications/order/${orderId}`, {
+      method: 'POST',
+      body: JSON.stringify({ target_status: targetStatus }),
+    }),
 };
