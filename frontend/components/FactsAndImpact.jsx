@@ -206,7 +206,7 @@ export default function FactsAndImpact() {
         </div>
 
         {/* SDG Hierarchy: SDG 8 Prominent on Top, SDGs 12 & 13 Pair Below */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', flex: 1, justifyContent: 'space-between', boxSizing: 'border-box', width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, justifyContent: 'space-between', boxSizing: 'border-box', width: '100%' }}>
           
           {/* SDG 8 - Large Prominent Featured Card */}
           <div
@@ -215,10 +215,10 @@ export default function FactsAndImpact() {
               backgroundColor: '#fdf2f4',
               border: '2px solid #a21942',
               borderRadius: '16px',
-              padding: '1.15rem 1.2rem',
+              padding: '0.95rem 1rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '1.1rem',
+              gap: '0.85rem',
               boxShadow: '0 6px 20px rgba(162, 25, 66, 0.12)',
               boxSizing: 'border-box',
               cursor: 'pointer',
@@ -226,41 +226,41 @@ export default function FactsAndImpact() {
             }}
           >
             <div style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '14px',
+              width: '52px',
+              height: '52px',
+              borderRadius: '12px',
               backgroundColor: '#a21942',
               color: '#ffffff',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(162, 25, 66, 0.35)',
+              boxShadow: '0 4px 12px rgba(162, 25, 66, 0.3)',
               border: '2px solid #fda4af',
               flexShrink: 0
             }}>
-              <span style={{ fontSize: '0.65rem', fontWeight: 800, lineHeight: 1 }}>SDG</span>
-              <span style={{ fontSize: '1.65rem', fontWeight: 900, lineHeight: 1 }}>8</span>
+              <span style={{ fontSize: '0.6rem', fontWeight: 800, lineHeight: 1 }}>SDG</span>
+              <span style={{ fontSize: '1.45rem', fontWeight: 900, lineHeight: 1 }}>8</span>
             </div>
 
             <div style={{ textAlign: 'left', flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#a21942', letterSpacing: '0.05em', display: 'block' }}>
+              <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#a21942', letterSpacing: '0.04em', display: 'block' }}>
                 PILAR UTAMA EKONOMI
               </span>
-              <h5 style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--text-dark)', lineHeight: 1.25, margin: '2px 0' }}>
+              <h5 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-dark)', lineHeight: 1.25, margin: '2px 0' }}>
                 Pekerjaan Layak &amp; Pertumbuhan Ekonomi
               </h5>
-              <p style={{ fontSize: '0.74rem', color: '#881337', fontWeight: 600, lineHeight: 1.35, margin: '2px 0 4px 0' }}>
+              <p style={{ fontSize: '0.72rem', color: '#881337', fontWeight: 600, lineHeight: 1.3, margin: '2px 0 3px 0' }}>
                 Penghasilan Tambahan &amp; Agregasi 140+ UMKM Bengkel
               </p>
-              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#a21942', textDecoration: 'underline', display: 'inline-block' }}>
+              <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#a21942', textDecoration: 'underline', display: 'inline-block' }}>
                 Detail Info &gt;
               </span>
             </div>
           </div>
 
-          {/* Bottom Row: SDGs 12 & 13 Pair Side-by-Side */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.75rem', width: '100%', boxSizing: 'border-box' }}>
+          {/* Bottom Row: SDGs 12 & 13 Pair Side-by-Side (Top-badge Layout) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.65rem', width: '100%', boxSizing: 'border-box' }}>
             
             {/* SDG 12 Card */}
             <div
@@ -269,42 +269,41 @@ export default function FactsAndImpact() {
                 backgroundColor: '#fffbe6',
                 border: '1.5px solid #bf8b2e',
                 borderRadius: '14px',
-                padding: '0.85rem 0.75rem',
+                padding: '0.8rem 0.75rem',
                 display: 'flex',
-                alignItems: 'center',
-                gap: '0.65rem',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: '105px',
                 boxShadow: '0 4px 12px rgba(191, 139, 46, 0.1)',
                 boxSizing: 'border-box',
                 minWidth: 0,
                 cursor: 'pointer'
               }}
             >
-              <div style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '10px',
-                backgroundColor: '#bf8b2e',
-                color: '#ffffff',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <span style={{ fontSize: '0.52rem', fontWeight: 800, lineHeight: 1 }}>SDG</span>
-                <span style={{ fontSize: '1.1rem', fontWeight: 800, lineHeight: 1 }}>12</span>
-              </div>
-              <div style={{ textAlign: 'left', minWidth: 0, flex: 1 }}>
-                <span style={{ fontSize: '0.55rem', fontWeight: 800, color: '#bf8b2e', display: 'block', letterSpacing: '0.02em' }}>
-                  EKONOMI SIRKULAR
-                </span>
-                <h5 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-dark)', lineHeight: 1.2, margin: '1px 0' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                  <span style={{
+                    backgroundColor: '#bf8b2e',
+                    color: '#ffffff',
+                    fontSize: '0.6rem',
+                    fontWeight: 900,
+                    padding: '2px 6px',
+                    borderRadius: '5px',
+                    lineHeight: 1.2
+                  }}>
+                    SDG 12
+                  </span>
+                  <span style={{ fontSize: '0.56rem', fontWeight: 800, color: '#92400e', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                    Sirkular
+                  </span>
+                </div>
+                <h5 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-dark)', lineHeight: 1.25, margin: 0, wordBreak: 'break-word' }}>
                   Produksi Bertanggung Jawab
                 </h5>
-                <span style={{ fontSize: '0.62rem', color: '#78350f', fontWeight: 700, textDecoration: 'underline', display: 'block' }}>
-                  Detail info &gt;
-                </span>
               </div>
+              <span style={{ fontSize: '0.64rem', color: '#b45309', fontWeight: 700, textDecoration: 'underline', marginTop: '0.35rem', display: 'inline-block' }}>
+                Detail info &gt;
+              </span>
             </div>
 
             {/* SDG 13 Card */}
@@ -314,42 +313,41 @@ export default function FactsAndImpact() {
                 backgroundColor: '#ecfdf5',
                 border: '1.5px solid #059669',
                 borderRadius: '14px',
-                padding: '0.85rem 0.75rem',
+                padding: '0.8rem 0.75rem',
                 display: 'flex',
-                alignItems: 'center',
-                gap: '0.65rem',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: '105px',
                 boxShadow: '0 4px 12px rgba(5, 150, 105, 0.1)',
                 boxSizing: 'border-box',
                 minWidth: 0,
                 cursor: 'pointer'
               }}
             >
-              <div style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '10px',
-                backgroundColor: '#059669',
-                color: '#ffffff',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <span style={{ fontSize: '0.52rem', fontWeight: 800, lineHeight: 1 }}>SDG</span>
-                <span style={{ fontSize: '1.1rem', fontWeight: 800, lineHeight: 1 }}>13</span>
-              </div>
-              <div style={{ textAlign: 'left', minWidth: 0, flex: 1 }}>
-                <span style={{ fontSize: '0.55rem', fontWeight: 800, color: '#059669', display: 'block', letterSpacing: '0.02em' }}>
-                  AKSI IKLIM
-                </span>
-                <h5 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-dark)', lineHeight: 1.2, margin: '1px 0' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                  <span style={{
+                    backgroundColor: '#059669',
+                    color: '#ffffff',
+                    fontSize: '0.6rem',
+                    fontWeight: 900,
+                    padding: '2px 6px',
+                    borderRadius: '5px',
+                    lineHeight: 1.2
+                  }}>
+                    SDG 13
+                  </span>
+                  <span style={{ fontSize: '0.56rem', fontWeight: 800, color: '#047857', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                    Aksi Iklim
+                  </span>
+                </div>
+                <h5 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-dark)', lineHeight: 1.25, margin: 0, wordBreak: 'break-word' }}>
                   Penanganan Perubahan Iklim
                 </h5>
-                <span style={{ fontSize: '0.62rem', color: '#047857', fontWeight: 700, textDecoration: 'underline', display: 'block' }}>
-                  Detail info &gt;
-                </span>
               </div>
+              <span style={{ fontSize: '0.64rem', color: '#047857', fontWeight: 700, textDecoration: 'underline', marginTop: '0.35rem', display: 'inline-block' }}>
+                Detail info &gt;
+              </span>
             </div>
 
           </div>

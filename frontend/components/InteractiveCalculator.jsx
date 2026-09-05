@@ -221,70 +221,77 @@ export default function InteractiveCalculator() {
           </div>
         </div>
 
-        {/* Right Output Container (Fixed Height - No Size Jump) */}
+        {/* Right Output Container (Flexible & Responsive) */}
         <div style={{
           backgroundColor: '#ffffff',
           border: '1px solid var(--card-border)',
           borderRadius: '20px',
-          padding: '1.75rem',
+          padding: '1.5rem',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           position: 'relative',
           overflow: 'hidden',
           minHeight: '280px',
-          height: '100%',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+          boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+          boxSizing: 'border-box'
         }}>
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.75rem' }}>
-            <Leaf3DIcon size={20} />
-            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#059669' }}>
-              Hasil Estimasi
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <Leaf3DIcon size={20} />
+              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#059669' }}>
+                Hasil Estimasi
+              </span>
+            </div>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', backgroundColor: '#f1f5f9', padding: '0.2rem 0.6rem', borderRadius: '20px' }}>
+              Real-time Simulation
             </span>
           </div>
 
-          {/* 3 Metric Cards Grid + Officer Illustration Container */}
+          {/* 3 Metric Cards Grid (Clean 3-column auto-fit layout) */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr) 130px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))',
             gap: '0.75rem',
-            alignItems: 'center',
-            height: '100%'
+            alignItems: 'stretch',
+            width: '100%',
+            boxSizing: 'border-box'
           }}>
             {/* Card 1: Perkiraan Uang (Soft Yellow #FFF7ED) */}
             <div style={{
               backgroundColor: '#fff7ed',
               border: '1px solid #fed7aa',
               borderRadius: '14px',
-              padding: '1rem 0.85rem',
+              padding: '0.9rem 0.8rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              height: '180px',
-              gap: '0.35rem'
+              minHeight: '160px',
+              gap: '0.5rem',
+              boxSizing: 'border-box'
             }}>
               <div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#c2410c' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#c2410c', display: 'block' }}>
                   Perkiraan Uang
                 </span>
                 <div className="icon-3d-box" style={{
-                  width: '32px',
-                  height: '32px',
+                  width: '30px',
+                  height: '30px',
                   borderRadius: '8px',
                   backgroundColor: '#ffffff',
                   border: '1px solid #fdba74',
                   marginTop: '4px'
                 }}>
-                  <Money3DIcon size={22} />
+                  <Money3DIcon size={20} />
                 </div>
               </div>
 
               <div>
-                <div className="tabular-nums" style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', lineHeight: 1.1 }}>
+                <div className="tabular-nums" style={{ fontSize: 'clamp(1.05rem, 1.35vw, 1.25rem)', fontWeight: 800, color: '#1e293b', lineHeight: 1.15, wordBreak: 'break-word' }}>
                   Rp {totalRevenue}
                 </div>
-                <span style={{ fontSize: '0.68rem', color: '#9a3412', fontWeight: 500, display: 'block', marginTop: '2px' }}>
+                <span style={{ fontSize: '0.68rem', color: '#9a3412', fontWeight: 500, display: 'block', marginTop: '2px', lineHeight: 1.25 }}>
                   Estimasi pendapatan Anda
                 </span>
               </div>
@@ -295,34 +302,35 @@ export default function InteractiveCalculator() {
               backgroundColor: '#eff6ff',
               border: '1px solid #bfdbfe',
               borderRadius: '14px',
-              padding: '1rem 0.85rem',
+              padding: '0.9rem 0.8rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              height: '180px',
-              gap: '0.35rem'
+              minHeight: '160px',
+              gap: '0.5rem',
+              boxSizing: 'border-box'
             }}>
               <div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#1e40af' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#1e40af', display: 'block' }}>
                   Potensial Pembeli
                 </span>
                 <div className="icon-3d-box" style={{
-                  width: '32px',
-                  height: '32px',
+                  width: '30px',
+                  height: '30px',
                   borderRadius: '8px',
                   backgroundColor: '#ffffff',
                   border: '1px solid #93c5fd',
                   marginTop: '4px'
                 }}>
-                  <Factory3DIcon size={22} />
+                  <Factory3DIcon size={20} />
                 </div>
               </div>
 
               <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1e293b', lineHeight: 1.1 }}>
+                <div style={{ fontSize: 'clamp(0.95rem, 1.2vw, 1.1rem)', fontWeight: 800, color: '#1e293b', lineHeight: 1.15, wordBreak: 'break-word' }}>
                   {buyerType}
                 </div>
-                <span style={{ fontSize: '0.68rem', color: '#1d4ed8', fontWeight: 600, display: 'block', marginTop: '2px' }}>
+                <span style={{ fontSize: '0.68rem', color: '#1d4ed8', fontWeight: 600, display: 'block', marginTop: '2px', lineHeight: 1.25 }}>
                   {gradeLabel}
                 </span>
               </div>
@@ -333,55 +341,38 @@ export default function InteractiveCalculator() {
               backgroundColor: '#ecfdf5',
               border: '1px solid #a7f3d0',
               borderRadius: '14px',
-              padding: '1rem 0.85rem',
+              padding: '0.9rem 0.8rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              height: '180px',
-              gap: '0.35rem'
+              minHeight: '160px',
+              gap: '0.5rem',
+              boxSizing: 'border-box'
             }}>
               <div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#047857' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#047857', display: 'block' }}>
                   Polusi Dicegah
                 </span>
                 <div className="icon-3d-box" style={{
-                  width: '32px',
-                  height: '32px',
+                  width: '30px',
+                  height: '30px',
                   borderRadius: '8px',
                   backgroundColor: '#ffffff',
                   border: '1px solid #6ee7b7',
                   marginTop: '4px'
                 }}>
-                  <Cloud3DIcon size={22} />
+                  <Cloud3DIcon size={20} />
                 </div>
               </div>
 
               <div>
-                <div className="tabular-nums" style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', lineHeight: 1.1 }}>
+                <div className="tabular-nums" style={{ fontSize: 'clamp(1.05rem, 1.35vw, 1.25rem)', fontWeight: 800, color: '#1e293b', lineHeight: 1.15, wordBreak: 'break-word' }}>
                   {co2PreventedKg} kg CO₂e
                 </div>
-                <span style={{ fontSize: '0.68rem', color: '#047857', fontWeight: 500, display: 'block', marginTop: '2px' }}>
+                <span style={{ fontSize: '0.68rem', color: '#047857', fontWeight: 500, display: 'block', marginTop: '2px', lineHeight: 1.25 }}>
                   Emisi berhasil dicegah
                 </span>
               </div>
-            </div>
-
-            {/* Far Right Transparent Officer Character */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-              height: '180px'
-            }}>
-              <img
-                src="/assets/officer_transparent.png"
-                alt="Officer ReuSource"
-                style={{
-                  maxHeight: '180px',
-                  width: 'auto',
-                  objectFit: 'contain'
-                }}
-              />
             </div>
           </div>
         </div>
