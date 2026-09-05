@@ -1,15 +1,22 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
+import { normalizePhone } from './phone.js';
 
 // Pre-hashed bcrypt for 'password123' and 'wa_otp_secure_login'
 const DEMO_PASSWORD_HASH = bcrypt.hashSync('password123', 10);
 const WA_OTP_PASSWORD_HASH = bcrypt.hashSync('wa_otp_secure_login', 10);
 
+const DB_FILE_PATH = process.env.VERCEL
+  ? path.join('/tmp', 'reusource_db_store.json')
+  : path.join(process.cwd(), '.db_storage.json');
+
 function generateId() {
   return crypto.randomUUID();
 }
 
-function createTable() {
+function createTable(onMutate = () => {}) {
   const items = new Map();
 
   return {
@@ -44,6 +51,7 @@ function createTable() {
         updated_at: data.updated_at || now,
       };
       items.set(id, record);
+      onMutate();
       return { ...record };
     },
     update: (id, updates) => {
@@ -55,13 +63,17 @@ function createTable() {
         updated_at: new Date().toISOString(),
       };
       items.set(id, updated);
+      onMutate();
       return { ...updated };
     },
     delete: (id) => {
-      return items.delete(id);
+      const res = items.delete(id);
+      onMutate();
+      return res;
     },
     clear: () => {
       items.clear();
+      onMutate();
     },
     count: (predicate = () => true) => {
       let count = 0;
@@ -70,25 +82,93 @@ function createTable() {
       }
       return count;
     },
+    loadAll: (arrayData) => {
+      items.clear();
+      if (Array.isArray(arrayData)) {
+        for (const item of arrayData) {
+          if (item && item.id) {
+            items.set(item.id, { ...item });
+          }
+        }
+      }
+    },
+    getAll: () => {
+      return Array.from(items.values());
+    },
     rawMap: items,
   };
 }
 
 class Database {
   constructor() {
-    this.categories = createTable();
-    this.companies = createTable();
-    this.users = createTable();
-    this.material_listings = createTable();
-    this.buying_requests = createTable();
-    this.aggregated_supplies = createTable();
-    this.aggregated_supply_items = createTable();
-    this.orders = createTable();
-    this.order_items = createTable();
-    this.verifications = createTable();
-    this.impact_logs = createTable();
+    const notifyMutation = () => this.saveToFile();
 
-    this.seedInitialData();
+    this.categories = createTable(notifyMutation);
+    this.companies = createTable(notifyMutation);
+    this.users = createTable(notifyMutation);
+    this.material_listings = createTable(notifyMutation);
+    this.buying_requests = createTable(notifyMutation);
+    this.aggregated_supplies = createTable(notifyMutation);
+    this.aggregated_supply_items = createTable(notifyMutation);
+    this.orders = createTable(notifyMutation);
+    this.order_items = createTable(notifyMutation);
+    this.verifications = createTable(notifyMutation);
+    this.impact_logs = createTable(notifyMutation);
+
+    const loaded = this.loadFromFile();
+    if (!loaded || this.companies.count() === 0) {
+      this.seedInitialData();
+      this.saveToFile();
+    }
+  }
+
+  saveToFile() {
+    try {
+      const snapshot = {
+        categories: this.categories.getAll(),
+        companies: this.companies.getAll(),
+        users: this.users.getAll(),
+        material_listings: this.material_listings.getAll(),
+        buying_requests: this.buying_requests.getAll(),
+        aggregated_supplies: this.aggregated_supplies.getAll(),
+        aggregated_supply_items: this.aggregated_supply_items.getAll(),
+        orders: this.orders.getAll(),
+        order_items: this.order_items.getAll(),
+        verifications: this.verifications.getAll(),
+        impact_logs: this.impact_logs.getAll(),
+        saved_at: new Date().toISOString(),
+      };
+      fs.writeFileSync(DB_FILE_PATH, JSON.stringify(snapshot, null, 2), 'utf-8');
+    } catch (err) {
+      // Non-fatal if filesystem is readonly in certain cloud environments
+      console.warn('Could not persist database to disk:', err.message);
+    }
+  }
+
+  loadFromFile() {
+    try {
+      if (fs.existsSync(DB_FILE_PATH)) {
+        const raw = fs.readFileSync(DB_FILE_PATH, 'utf-8');
+        const data = JSON.parse(raw);
+        if (data && data.companies && data.companies.length > 0) {
+          this.categories.loadAll(data.categories);
+          this.companies.loadAll(data.companies);
+          this.users.loadAll(data.users);
+          this.material_listings.loadAll(data.material_listings);
+          this.buying_requests.loadAll(data.buying_requests);
+          this.aggregated_supplies.loadAll(data.aggregated_supplies);
+          this.aggregated_supply_items.loadAll(data.aggregated_supply_items);
+          this.orders.loadAll(data.orders);
+          this.order_items.loadAll(data.order_items);
+          this.verifications.loadAll(data.verifications);
+          this.impact_logs.loadAll(data.impact_logs);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not load database from disk:', err.message);
+    }
+    return false;
   }
 
   seedInitialData() {
@@ -98,85 +178,80 @@ class Database {
       name: 'Serbuk Serutan Kayu Jati',
       description: 'Biomassa serbuk gergaji dan serutan kayu jati industri mebel',
       default_unit: 'kg',
-      co2_saved_factor_per_unit: 1.25,
+      target_industry: 'Wood Pellet, Briket, Boiler Co-firing',
     });
 
-    const catWoodChips = this.categories.create({
+    this.categories.create({
       id: 'cat-wood-002',
       name: 'Wood Chips / Serpihan Kayu',
-      description: 'Serpihan kayu keras dan lunak untuk bahan baku pelet/boiler',
+      description: 'Serpihan kayu sengon & mahoni untuk boiler dan pulp',
       default_unit: 'kg',
-      co2_saved_factor_per_unit: 1.15,
+      target_industry: 'Boiler Pembangkit Listrik Biomassa',
     });
 
-    const catWoodOffcuts = this.categories.create({
-      id: 'cat-wood-003',
-      name: 'Potongan Kayu Padat (Offcuts)',
-      description: 'Potongan balok kayu sisa industri mebel dan pertukangan',
-      default_unit: 'kg',
-      co2_saved_factor_per_unit: 1.05,
-    });
-
-    const catWoodBark = this.categories.create({
-      id: 'cat-wood-004',
-      name: 'Kulit Kayu & Sisa Sawmill',
-      description: 'Limbah kupasan kulit kayu dan sisa penggergajian sentra sawmill',
-      default_unit: 'kg',
-      co2_saved_factor_per_unit: 0.95,
-    });
-
-    // 2. Demo Companies (Approved)
+    // 2. Companies
+    // 2.1 Pemasok 1: Cimahi, Jawa Barat (650 kg Grade A)
     const sup1 = this.companies.create({
-      id: 'comp-sup-001',
+      id: 'comp-sup-cimahi',
       name: 'UD Kayu Lestari Cimahi',
       company_type: 'umkm_supplier',
-      nib_npwp: '9120001234567',
-      address: 'Jl. Raya Cimahi No. 45',
+      phone: '081234567891',
+      address: 'Sentra Bengkel Mebel Cimahi',
       city: 'Cimahi',
       province: 'Jawa Barat',
       latitude: -6.8722,
       longitude: 107.5422,
       verification_status: 'approved',
-      verification_notes: 'Dokumen legalitas & verifikasi lokasi fisik valid.',
-      is_micro_business: 'true',
-      is_first_time_seller: 'false',
+      verification_notes: 'Bengkel binaan sentra kayu Cimahi, verified ISO 27001',
     });
 
+    // 2.2 Pemasok 2: Banda Neira, Maluku (120 kg Grade A)
     const sup2 = this.companies.create({
-      id: 'comp-sup-002',
+      id: 'comp-sup-banda',
       name: 'UD Banda Biomassa Neira',
       company_type: 'umkm_supplier',
-      nib_npwp: '9120008877665',
-      address: 'Jl. Pelabuhan Nusantara No. 8',
+      phone: '081298765432',
+      address: 'Kawasan Pesisir Banda Neira',
       city: 'Banda Neira',
       province: 'Maluku',
       latitude: -4.5262,
       longitude: 129.9042,
       verification_status: 'approved',
-      verification_notes: 'Dokumen legalitas & audit lokasi fisik valid.',
-      is_micro_business: 'true',
-      is_first_time_seller: 'false',
+      verification_notes: 'Sentra olah kayu pulau Banda, verified ISO 27001',
     });
 
+    // 2.3 Pemasok 3: UD Freeport (Timika, 089876543)
+    const supFreeport = this.companies.create({
+      id: 'comp-sup-freeport',
+      name: 'UD Freeport',
+      company_type: 'umkm_supplier',
+      phone: '089876543',
+      address: 'Jl. Poros Timika - Tembagapura',
+      city: 'Timika',
+      province: 'Papua Tengah',
+      latitude: -4.5468,
+      longitude: 136.8837,
+      verification_status: 'pending_verification',
+      verification_notes: 'Menunggu peninjauan NIB dan verifikasi lapangan verifikator ISO 27001',
+    });
+
+    // 2.4 Pembeli Industri: Cikarang / Bekasi
     const buyer1 = this.companies.create({
-      id: 'comp-buy-001',
-      name: 'PT Biomassa Nusantara Energi (Pabrik Pelet)',
+      id: 'comp-buy-nusantara',
+      name: 'PT Biomassa Nusantara Energi',
       company_type: 'enterprise_buyer',
-      nib_npwp: '013456789012000',
-      address: 'Kawasan Industri Jababeka 5, Cikarang',
+      phone: '081234567892',
+      address: 'Kawasan Industri GIIC Cikarang',
       city: 'Bekasi',
       province: 'Jawa Barat',
       latitude: -6.3005,
-      longitude: 107.169,
+      longitude: 107.1690,
       verification_status: 'approved',
-      verification_notes: 'Perusahaan pembeli enterprise lolos audit verifikasi finansial.',
-      is_micro_business: 'false',
-      is_first_time_seller: 'false',
     });
 
-    // 3. Demo Users
+    // 3. User Accounts (Pre-hashed bcrypt)
     this.users.create({
-      id: 'usr-admin-001',
+      id: 'usr-demo-admin',
       email: 'admin@bylink.id',
       password_hash: bcrypt.hashSync('admin123', 10),
       full_name: 'Super Admin Verifier',
@@ -209,6 +284,17 @@ class Database {
     });
 
     this.users.create({
+      id: 'usr-freeport',
+      email: 'freeport@supplier.com',
+      password_hash: DEMO_PASSWORD_HASH,
+      full_name: 'Pemasok UD Freeport',
+      phone: '089876543',
+      role: 'supplier_admin',
+      company_id: supFreeport.id,
+      is_active: true,
+    });
+
+    this.users.create({
       id: 'usr-demo-buy',
       email: 'test@buyer.com',
       password_hash: DEMO_PASSWORD_HASH,
@@ -219,8 +305,8 @@ class Database {
       is_active: true,
     });
 
-    // 4. Material Listings (2 Supplier Serbuk Serutan Jati Grade A: Cimahi 650kg & Banda Neira 120kg)
-    const list1 = this.material_listings.create({
+    // 4. Material Listings (2 Supplier Serbuk Serutan Jati Grade A)
+    this.material_listings.create({
       id: 'list-001',
       company_id: sup1.id,
       category_id: catWoodSawdust.id,
@@ -245,7 +331,7 @@ class Database {
       photos: [],
     });
 
-    const list2 = this.material_listings.create({
+    this.material_listings.create({
       id: 'list-002',
       company_id: sup2.id,
       category_id: catWoodSawdust.id,

@@ -1,0 +1,207 @@
+{
+  "categories": [
+    {
+      "id": "cat-wood-001",
+      "name": "Serbuk Serutan Kayu Jati",
+      "description": "Biomassa serbuk gergaji dan serutan kayu jati industri mebel",
+      "default_unit": "kg",
+      "target_industry": "Wood Pellet, Briket, Boiler Co-firing",
+      "created_at": "2026-09-05T14:23:48.801Z",
+      "updated_at": "2026-09-05T14:23:48.801Z"
+    },
+    {
+      "id": "cat-wood-002",
+      "name": "Wood Chips / Serpihan Kayu",
+      "description": "Serpihan kayu sengon & mahoni untuk boiler dan pulp",
+      "default_unit": "kg",
+      "target_industry": "Boiler Pembangkit Listrik Biomassa",
+      "created_at": "2026-09-05T14:23:48.806Z",
+      "updated_at": "2026-09-05T14:23:48.806Z"
+    }
+  ],
+  "companies": [
+    {
+      "id": "comp-sup-cimahi",
+      "name": "UD Kayu Lestari Cimahi",
+      "company_type": "umkm_supplier",
+      "phone": "081234567891",
+      "address": "Sentra Bengkel Mebel Cimahi",
+      "city": "Cimahi",
+      "province": "Jawa Barat",
+      "latitude": -6.8722,
+      "longitude": 107.5422,
+      "verification_status": "approved",
+      "verification_notes": "Bengkel binaan sentra kayu Cimahi, verified ISO 27001",
+      "created_at": "2026-09-05T14:23:48.807Z",
+      "updated_at": "2026-09-05T14:23:48.807Z"
+    },
+    {
+      "id": "comp-sup-banda",
+      "name": "UD Banda Biomassa Neira",
+      "company_type": "umkm_supplier",
+      "phone": "081298765432",
+      "address": "Kawasan Pesisir Banda Neira",
+      "city": "Banda Neira",
+      "province": "Maluku",
+      "latitude": -4.5262,
+      "longitude": 129.9042,
+      "verification_status": "approved",
+      "verification_notes": "Sentra olah kayu pulau Banda, verified ISO 27001",
+      "created_at": "2026-09-05T14:23:48.807Z",
+      "updated_at": "2026-09-05T14:23:48.807Z"
+    },
+    {
+      "id": "comp-sup-freeport",
+      "name": "UD Freeport",
+      "company_type": "umkm_supplier",
+      "phone": "089876543",
+      "address": "Jl. Poros Timika - Tembagapura",
+      "city": "Timika",
+      "province": "Papua Tengah",
+      "latitude": -4.5468,
+      "longitude": 136.8837,
+      "verification_status": "pending_verification",
+      "verification_notes": "Menunggu peninjauan NIB dan verifikasi lapangan verifikator ISO 27001",
+      "created_at": "2026-09-05T14:23:48.807Z",
+      "updated_at": "2026-09-05T14:23:48.807Z"
+    },
+    {
+      "id": "comp-buy-nusantara",
+      "name": "PT Biomassa Nusantara Energi",
+      "company_type": "enterprise_buyer",
+      "phone": "081234567892",
+      "address": "Kawasan Industri GIIC Cikarang",
+      "city": "Bekasi",
+      "province": "Jawa Barat",
+      "latitude": -6.3005,
+      "longitude": 107.169,
+      "verification_status": "approved",
+      "created_at": "2026-09-05T14:23:48.808Z",
+      "updated_at": "2026-09-05T14:23:48.808Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "usr-demo-admin",
+      "email": "admin@bylink.id",
+      "password_hash": "$2a$10$aA3TlX/vzV/bbTaTGUDz0O9T.bK4PaU30wo8a/jn/lq/02IFvuKX.",
+      "full_name": "Super Admin Verifier",
+      "phone": "081199887766",
+      "role": "admin",
+      "company_id": "comp-sup-cimahi",
+      "is_active": true,
+      "created_at": "2026-09-05T14:23:48.962Z",
+      "updated_at": "2026-09-05T14:23:48.962Z"
+    },
+    {
+      "id": "usr-demo-sup",
+      "email": "test@supplier.com",
+      "password_hash": "$2a$10$7lHsObpIGNZKFtxmRbGOgOhd818rLTScQ1gCiAp6VVCgIBDGTgcx.",
+      "full_name": "Budi Santoso (Supplier Cimahi)",
+      "phone": "081234567891",
+      "role": "supplier_admin",
+      "company_id": "comp-sup-cimahi",
+      "is_active": true,
+      "created_at": "2026-09-05T14:23:48.963Z",
+      "updated_at": "2026-09-05T14:23:48.963Z"
+    },
+    {
+      "id": "usr-demo-sup2",
+      "email": "supplier.banda@reusource.id",
+      "password_hash": "$2a$10$7lHsObpIGNZKFtxmRbGOgOhd818rLTScQ1gCiAp6VVCgIBDGTgcx.",
+      "full_name": "Hasan Banda (Supplier Neira)",
+      "phone": "081298765432",
+      "role": "supplier_admin",
+      "company_id": "comp-sup-banda",
+      "is_active": true,
+      "created_at": "2026-09-05T14:23:48.964Z",
+      "updated_at": "2026-09-05T14:23:48.964Z"
+    },
+    {
+      "id": "usr-freeport",
+      "email": "freeport@supplier.com",
+      "password_hash": "$2a$10$7lHsObpIGNZKFtxmRbGOgOhd818rLTScQ1gCiAp6VVCgIBDGTgcx.",
+      "full_name": "Pemasok UD Freeport",
+      "phone": "089876543",
+      "role": "supplier_admin",
+      "company_id": "comp-sup-freeport",
+      "is_active": true,
+      "created_at": "2026-09-05T14:23:48.965Z",
+      "updated_at": "2026-09-05T14:23:48.965Z"
+    },
+    {
+      "id": "usr-demo-buy",
+      "email": "test@buyer.com",
+      "password_hash": "$2a$10$7lHsObpIGNZKFtxmRbGOgOhd818rLTScQ1gCiAp6VVCgIBDGTgcx.",
+      "full_name": "Sarah Wijaya (Buyer Pabrik)",
+      "phone": "081234567892",
+      "role": "buyer_admin",
+      "company_id": "comp-buy-nusantara",
+      "is_active": true,
+      "created_at": "2026-09-05T14:23:48.965Z",
+      "updated_at": "2026-09-05T14:23:48.965Z"
+    }
+  ],
+  "material_listings": [
+    {
+      "id": "list-001",
+      "company_id": "comp-sup-cimahi",
+      "category_id": "cat-wood-001",
+      "title": "Serbuk Serutan Kayu Jati (Grade A)",
+      "description": "Kondisi kering oven, kadar air ≤12%, bebas paku dan residu lem.",
+      "grade_spec": {
+        "grade": "A",
+        "is_dry": true,
+        "is_clean": true,
+        "evaluated_reason": "Kering sempurna, bebas kontaminasi, volume >= 100 kg",
+        "co2e_saved_kg": 812.5
+      },
+      "available_quantity": 650,
+      "initial_quantity": 650,
+      "unit": "kg",
+      "price_per_unit": 800,
+      "frequency": "weekly",
+      "latitude": -6.8722,
+      "longitude": 107.5422,
+      "city": "Cimahi",
+      "status": "active",
+      "photos": [],
+      "created_at": "2026-09-05T14:23:48.966Z",
+      "updated_at": "2026-09-05T14:23:48.966Z"
+    },
+    {
+      "id": "list-002",
+      "company_id": "comp-sup-banda",
+      "category_id": "cat-wood-001",
+      "title": "Serbuk Serutan Kayu Jati Banda (Grade A)",
+      "description": "Serbuk kayu jati alami kering pulau Banda Neira, kadar air 13.5%, siap olah briket/pelet.",
+      "grade_spec": {
+        "grade": "A",
+        "is_dry": true,
+        "is_clean": true,
+        "evaluated_reason": "Kering alami, murni serat jati, volume >= 100 kg",
+        "co2e_saved_kg": 150
+      },
+      "available_quantity": 120,
+      "initial_quantity": 120,
+      "unit": "kg",
+      "price_per_unit": 750,
+      "frequency": "weekly",
+      "latitude": -4.5262,
+      "longitude": 129.9042,
+      "city": "Banda Neira",
+      "status": "active",
+      "photos": [],
+      "created_at": "2026-09-05T14:23:48.966Z",
+      "updated_at": "2026-09-05T14:23:48.966Z"
+    }
+  ],
+  "buying_requests": [],
+  "aggregated_supplies": [],
+  "aggregated_supply_items": [],
+  "orders": [],
+  "order_items": [],
+  "verifications": [],
+  "impact_logs": [],
+  "saved_at": "2026-09-05T14:23:48.967Z"
+}
