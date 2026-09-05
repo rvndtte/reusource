@@ -980,14 +980,7 @@ export default function AuthPage({ initialMode = 'register', onClose, onLoginSuc
                       onClick={() => setLoginPhone('081234567891')}
                       style={{ padding: '5px', borderRadius: '4px', border: '1px solid #a7f3d0', backgroundColor: '#ecfdf5', color: '#047857', fontWeight: 700, cursor: 'pointer', fontSize: '0.72rem' }}
                     >
-                      Pemasok Cimahi
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLoginPhone('081298765432')}
-                      style={{ padding: '5px', borderRadius: '4px', border: '1px solid #a7f3d0', backgroundColor: '#ecfdf5', color: '#047857', fontWeight: 700, cursor: 'pointer', fontSize: '0.72rem' }}
-                    >
-                      Pemasok Neira
+                      Pemasok
                     </button>
                     <button
                       type="button"
@@ -995,6 +988,13 @@ export default function AuthPage({ initialMode = 'register', onClose, onLoginSuc
                       style={{ padding: '5px', borderRadius: '4px', border: '1px solid #bfdbfe', backgroundColor: '#eff6ff', color: '#1d4ed8', fontWeight: 700, cursor: 'pointer', fontSize: '0.72rem' }}
                     >
                       Pembeli
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLoginPhone('081199887766')}
+                      style={{ padding: '5px', borderRadius: '4px', border: '1px solid #fecaca', backgroundColor: '#fef2f2', color: '#b91c1c', fontWeight: 700, cursor: 'pointer', fontSize: '0.72rem' }}
+                    >
+                      Admin
                     </button>
                   </div>
                 </div>

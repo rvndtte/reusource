@@ -219,22 +219,7 @@ class Database {
       verification_notes: 'Sentra olah kayu pulau Banda, verified ISO 27001',
     });
 
-    // 2.3 Pemasok 3: UD Freeport (Timika, 089876543)
-    const supFreeport = this.companies.create({
-      id: 'comp-sup-freeport',
-      name: 'UD Freeport',
-      company_type: 'umkm_supplier',
-      phone: '089876543',
-      address: 'Jl. Poros Timika - Tembagapura',
-      city: 'Timika',
-      province: 'Papua Tengah',
-      latitude: -4.5468,
-      longitude: 136.8837,
-      verification_status: 'pending_verification',
-      verification_notes: 'Menunggu peninjauan NIB dan verifikasi lapangan verifikator ISO 27001',
-    });
-
-    // 2.4 Pembeli Industri: Cikarang / Bekasi
+    // 2.3 Pembeli Industri: Cikarang / Bekasi
     const buyer1 = this.companies.create({
       id: 'comp-buy-nusantara',
       name: 'PT Biomassa Nusantara Energi',
@@ -279,17 +264,6 @@ class Database {
       phone: '081298765432',
       role: 'supplier_admin',
       company_id: sup2.id,
-      is_active: true,
-    });
-
-    this.users.create({
-      id: 'usr-freeport',
-      email: 'freeport@supplier.com',
-      password_hash: DEMO_PASSWORD_HASH,
-      full_name: 'Pemasok UD Freeport',
-      phone: '089876543',
-      role: 'supplier_admin',
-      company_id: supFreeport.id,
       is_active: true,
     });
 
