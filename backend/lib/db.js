@@ -125,10 +125,10 @@ class Database {
       co2_saved_factor_per_unit: 0.95,
     });
 
-    // 2. Companies
+    // 2. Demo Companies (Approved)
     const sup1 = this.companies.create({
       id: 'comp-sup-001',
-      name: 'UD Kayu Lestari Cimahi',
+      name: 'UD Kayu Lestari Cimahi (Demo Supplier)',
       company_type: 'umkm_supplier',
       nib_npwp: '9120001234567',
       address: 'Jl. Raya Cimahi No. 45',
@@ -142,41 +142,9 @@ class Database {
       is_first_time_seller: 'false',
     });
 
-    const sup2 = this.companies.create({
-      id: 'comp-sup-002',
-      name: 'Sentra Mebel Jati Barokah Sumedang',
-      company_type: 'umkm_supplier',
-      nib_npwp: '9120007654321',
-      address: 'Jl. Raya Jatinangor No. 12',
-      city: 'Sumedang',
-      province: 'Jawa Barat',
-      latitude: -6.9311,
-      longitude: 107.7719,
-      verification_status: 'approved',
-      verification_notes: 'Dokumen legalitas terverifikasi.',
-      is_micro_business: 'true',
-      is_first_time_seller: 'false',
-    });
-
-    const sup3 = this.companies.create({
-      id: 'comp-sup-003',
-      name: 'Koperasi Sawmill Resik Bandung',
-      company_type: 'umkm_supplier',
-      nib_npwp: '9120009988776',
-      address: 'Jl. Soekarno-Hatta No. 210',
-      city: 'Bandung',
-      province: 'Jawa Barat',
-      latitude: -6.945,
-      longitude: 107.64,
-      verification_status: 'approved',
-      verification_notes: 'Tersertifikasi ramah lingkungan.',
-      is_micro_business: 'true',
-      is_first_time_seller: 'false',
-    });
-
     const buyer1 = this.companies.create({
       id: 'comp-buy-001',
-      name: 'PT Biomassa Nusantara Energi (Pabrik Pelet)',
+      name: 'PT Biomassa Nusantara Energi (Demo Buyer)',
       company_type: 'enterprise_buyer',
       nib_npwp: '013456789012000',
       address: 'Kawasan Industri Jababeka 5, Cikarang',
@@ -190,29 +158,7 @@ class Database {
       is_first_time_seller: 'false',
     });
 
-    // 3. Users
-    this.users.create({
-      id: 'usr-sup-001',
-      email: 'supplier1@cimahi.com',
-      password_hash: DEMO_PASSWORD_HASH,
-      full_name: 'Budi Santoso',
-      phone: '081234567890',
-      role: 'supplier_admin',
-      company_id: sup1.id,
-      is_active: true,
-    });
-
-    this.users.create({
-      id: 'usr-buy-001',
-      email: 'buyer@ecopolymer.co.id',
-      password_hash: DEMO_PASSWORD_HASH,
-      full_name: 'Sarah Wijaya',
-      phone: '081987654321',
-      role: 'buyer_admin',
-      company_id: buyer1.id,
-      is_active: true,
-    });
-
+    // 3. Demo Users
     this.users.create({
       id: 'usr-admin-001',
       email: 'admin@bylink.id',
@@ -220,17 +166,6 @@ class Database {
       full_name: 'Super Admin Verifier',
       phone: '081199887766',
       role: 'admin',
-      company_id: sup1.id,
-      is_active: true,
-    });
-
-    this.users.create({
-      id: 'usr-ver-001',
-      email: 'verifier@reusource.id',
-      password_hash: DEMO_PASSWORD_HASH,
-      full_name: 'Ahmad Field Verifier',
-      phone: '081122334455',
-      role: 'verifier',
       company_id: sup1.id,
       is_active: true,
     });

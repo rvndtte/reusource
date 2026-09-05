@@ -6,13 +6,9 @@ export async function GET(request) {
   try {
     await requireRoles(request, ['admin', 'verifier']);
 
-    let companies = db.companies.find(
+    const companies = db.companies.find(
       (c) => c.verification_status === 'pending_verification'
     );
-
-    if (companies.length === 0) {
-      companies = db.companies.find();
-    }
 
     const results = companies.map((c) => {
       const primaryUser = db.users.findOne((u) => u.company_id === c.id);
