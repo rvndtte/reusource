@@ -2,7 +2,14 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*", "./*"],
+      "@/frontend/*": ["./frontend/*"],
+      "@/backend/*": ["./backend/*"],
+      "@/components/*": ["./frontend/components/*", "./src/components/*"],
+      "@/context/*": ["./frontend/context/*", "./src/context/*"],
+      "@/services/*": ["./frontend/services/*", "./src/services/*"],
+      "@/config/*": ["./frontend/config/*", "./src/config/*"],
+      "@/lib/*": ["./backend/lib/*", "./src/lib/*"]
     }
   }
 }

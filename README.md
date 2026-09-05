@@ -120,25 +120,12 @@ Anda dapat langsung mencoba semua peran aplikasi tanpa perlu mendaftar dari awal
 
 ---
 
-## 6. Struktur Direktori Project
+## 6. Struktur Direktori Project (Modular Monorepo)
 
 ```text
-ByLink/
-├── public/                     # Aset statis (ikon, visual edukasi, favicon)
-├── src/
-│   ├── app/
-│   │   ├── api/v1/             # 22 REST API Route Handlers (Next.js 15)
-│   │   │   ├── auth/           # Login, Register, Request OTP, Verify OTP
-│   │   │   ├── material-listings/ # Setor Stok, Kluster, My Listings
-│   │   │   ├── buying-requests/   # Form Kebutuhan Permintaan Buyer
-│   │   │   ├── smart-matching/    # Spatial Haversine Aggregation
-│   │   │   ├── orders/            # PO Creation & Live Status Stepper
-│   │   │   ├── verifications/     # Admin Verification & Audit
-│   │   │   └── impact/            # ESG CO2e Analytics Engine
-│   │   ├── layout.jsx          # Root layout & Leaflet stylesheet CDN
-│   │   ├── page.jsx            # Dynamic Landing Page & Role Gateway
-│   │   └── globals.css         # Industrial design system CSS tokens
-│   ├── components/             # Komponen UI modular
+ByLink/ (Root Monorepo)
+├── frontend/                   # Modul Khusus Frontend & Antarmuka Pengguna
+│   ├── components/             # Komponen UI Reusable (Header, Hero, Peta Leaflet, Stepper)
 │   │   ├── Header.jsx          # Navbar adaptif berbasis RBAC
 │   │   ├── HeroSection.jsx     # Visual isometrik & Call-to-Actions
 │   │   ├── AuthPage.jsx        # Dual-mode Auth (WhatsApp OTP & Email)
@@ -149,18 +136,37 @@ ByLink/
 │   │   ├── BuyerOrders.jsx     # Monitoring pesanan & sertifikat ESG
 │   │   ├── AdminVerifikasi.jsx # Konsol verifikasi akun & audit fisik
 │   │   └── FactsAndImpact.jsx  # Visualisasi dampak SDG 8, 12, dan 13
-│   ├── config/
-│   │   └── businessRules.js    # Aturan bisnis grading, harga acuan, & faktor emisi
 │   ├── context/
 │   │   └── AuthContext.jsx     # Global JWT authentication provider
+│   ├── services/
+│   │   └── api.js              # Client SDK terpusat untuk interaksi API
+│   ├── config/
+│   │   └── businessRules.js    # Aturan bisnis grading, harga acuan, & faktor emisi
+│   └── styles/
+│       ├── globals.css         # Industrial design system CSS tokens
+│       └── index.css           # Styling dasar & utilitas komponen
+├── backend/                    # Modul Khusus Logika Bisnis & Database Server
 │   ├── lib/
 │   │   ├── auth.js             # JWT token generator & RBAC middleware
 │   │   ├── db.js               # In-memory relational database & seed data
 │   │   ├── impactEngine.js     # Engine kalkulasi dampak emisi karbon LCA
 │   │   ├── matchingEngine.js   # Algoritma pencocokan jarak spasial Haversine
 │   │   └── otpStore.js         # Pengelola kode OTP WhatsApp & rate limit
-│   └── services/
-│       └── api.js              # Client SDK terpusat untuk interaksi API
+├── src/
+│   └── app/                    # Next.js 15 Fullstack Entry Points
+│       ├── api/v1/             # 22 REST API Route Handlers (Serverless)
+│       │   ├── auth/           # Login, Register, Request OTP, Verify OTP
+│       │   ├── material-listings/ # Setor Stok, Kluster, My Listings
+│       │   ├── buying-requests/   # Form Kebutuhan Permintaan Buyer
+│       │   ├── smart-matching/    # Spatial Haversine Aggregation
+│       │   ├── orders/            # PO Creation & Live Status Stepper
+│       │   ├── verifications/     # Admin Verification & Audit
+│       │   └── impact/            # ESG CO2e Analytics Engine
+│       ├── layout.jsx          # Root layout & Leaflet stylesheet CDN
+│       ├── page.jsx            # Dynamic Landing Page & Role Gateway
+│       └── globals.css
+├── public/                     # Aset statis (ikon, visual edukasi, favicon)
+├── jsconfig.json               # Path alias monorepo (@/frontend, @/backend)
 ├── vercel.json                 # Konfigurasi deployment serverless Vercel
 ├── package.json                # Dependensi dan scripts
 └── README.md                   # Dokumentasi teknis resmi project
