@@ -1,13 +1,15 @@
 // In-Memory OTP Store with timestamps for Rate Limiting & Expiry
 // Format: { phone: { code: string, sent_at: number, expires_at: number } }
 
+import { normalizePhone } from './phone.js';
+
 const _otpStore = new Map();
 export const OTP_RATE_LIMIT_SECONDS = 60;
 export const OTP_EXPIRY_SECONDS = 300; // 5 Minutes
 
 export function checkAndRecordOtpRequest(phone, code) {
   const now = Date.now() / 1000;
-  const cleanPhone = phone.trim().replace(/[\s-]/g, '');
+  const cleanPhone = normalizePhone(phone);
 
   if (_otpStore.has(cleanPhone)) {
     const record = _otpStore.get(cleanPhone);
@@ -29,7 +31,7 @@ export function checkAndRecordOtpRequest(phone, code) {
 
 export function verifyStoredOtp(phone, enteredCode) {
   const now = Date.now() / 1000;
-  const cleanPhone = phone.trim().replace(/[\s-]/g, '');
+  const cleanPhone = normalizePhone(phone);
 
   const record = _otpStore.get(cleanPhone);
   if (!record) {

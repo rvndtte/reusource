@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { checkAndRecordOtpRequest } from '@/lib/otpStore';
+import { normalizePhone } from '@/lib/phone';
 
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const phone = (body.phone || '').trim().replace(/[\s-]/g, '');
+    const rawPhone = body.phone || '';
+    const phone = normalizePhone(rawPhone);
 
     if (phone.length < 8) {
       return NextResponse.json(

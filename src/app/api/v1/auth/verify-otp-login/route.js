@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { createAccessToken } from '@/lib/auth';
 import { verifyStoredOtp } from '@/lib/otpStore';
+import { normalizePhone } from '@/lib/phone';
 
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const phone = (body.phone || '').trim().replace(/[\s-]/g, '');
+    const rawPhone = body.phone || '';
+    const phone = normalizePhone(rawPhone);
     const otpCode = (body.otp_code || '').trim();
 
     try {
@@ -18,10 +20,10 @@ export async function POST(request) {
       );
     }
 
-    const user = db.users.findOne((u) => u.phone === phone);
+    const user = db.users.findOne((u) => normalizePhone(u.phone) === phone);
     if (!user) {
       return NextResponse.json(
-        { detail: 'Nomor WhatsApp ini belum terdaftar di sistem. Silakan lakukan pendaftaran terlebih dahulu.' },
+        { detail: `Nomor WhatsApp (${rawPhone}) ini belum terdaftar di sistem. Silakan lakukan pendaftaran terlebih dahulu.` },
         { status: 404 }
       );
     }
@@ -35,6 +37,7 @@ export async function POST(request) {
       user_id: user.id,
       email: user.email,
       full_name: user.full_name,
+      phone: user.phone,
       role: user.role,
       company_id: user.company_id,
       company_name: company?.name || '',

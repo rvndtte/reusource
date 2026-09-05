@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { createAccessToken, hashPassword } from '@/lib/auth';
 import { verifyStoredOtp } from '@/lib/otpStore';
+import { normalizePhone } from '@/lib/phone';
 
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const phone = (body.phone || '').trim().replace(/[\s-]/g, '');
+    const rawPhone = body.phone || '';
+    const phone = normalizePhone(rawPhone);
     const businessName = (body.business_name || '').trim();
     const otpCode = (body.otp_code || '').trim();
 
@@ -27,7 +29,7 @@ export async function POST(request) {
     }
 
     // Check if user with this phone already exists
-    const existingUser = db.users.findOne((u) => u.phone === phone);
+    const existingUser = db.users.findOne((u) => normalizePhone(u.phone) === phone);
     if (existingUser) {
       const company = existingUser.company_id ? db.companies.findById(existingUser.company_id) : null;
       const token = await createAccessToken(existingUser.id);
@@ -37,6 +39,7 @@ export async function POST(request) {
         user_id: existingUser.id,
         email: existingUser.email,
         full_name: existingUser.full_name,
+        phone: existingUser.phone,
         role: existingUser.role,
         company_id: existingUser.company_id,
         company_name: company?.name || '',
@@ -95,6 +98,7 @@ export async function POST(request) {
         user_id: user.id,
         email: user.email,
         full_name: user.full_name,
+        phone: user.phone,
         role: user.role,
         company_id: company.id,
         company_name: company.name,

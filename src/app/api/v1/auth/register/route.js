@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { createAccessToken, hashPassword } from '@/lib/auth';
+import { normalizePhone } from '@/lib/phone';
 
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
     const email = (body.email || '').trim().toLowerCase();
+    const rawPhone = body.phone || '';
+    const phone = rawPhone ? normalizePhone(rawPhone) : null;
 
     const existing = db.users.findOne((u) => (u.email || '').toLowerCase() === email);
     if (existing) {
@@ -18,6 +21,7 @@ export async function POST(request) {
     const company = db.companies.create({
       name: (body.company_name || '').trim(),
       company_type: body.company_type || 'umkm_supplier',
+      phone: phone || '',
       address: (body.address || '').trim(),
       city: (body.city || '').trim(),
       province: (body.province || '').trim(),
@@ -31,7 +35,7 @@ export async function POST(request) {
       email: email,
       password_hash: pwdHash,
       full_name: (body.full_name || '').trim(),
-      phone: body.phone ? body.phone.trim() : null,
+      phone: phone,
       role: body.role || 'supplier_admin',
       company_id: company.id,
       is_active: true,
@@ -45,6 +49,7 @@ export async function POST(request) {
         user_id: user.id,
         email: user.email,
         full_name: user.full_name,
+        phone: user.phone,
         role: user.role,
         company_id: company.id,
         company_name: company.name,

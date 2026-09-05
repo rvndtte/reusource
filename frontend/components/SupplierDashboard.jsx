@@ -52,17 +52,34 @@ export default function SupplierDashboard() {
       if (clusterRes) setClusterData(clusterRes);
 
       if (listingsRes && listingsRes.length > 0) {
+        const isClusterReady = (clusterRes?.is_ready_for_sale) || (clusterRes?.current_volume_kg >= 500);
         setSubmissions(
-          listingsRes.map((l, index) => ({
-            id: l.id.slice(0, 8),
-            date: l.created_at ? l.created_at.split('T')[0] : '2026-09-03',
-            wasteType: l.title.split(' (Grade')[0] || l.title,
-            weight: l.available_quantity,
-            grade: l.grade_spec?.grade || 'A',
-            statusStep: index === 0 ? 2 : 4,
-            statusLabel: l.status === 'active' ? 'Kluster Terbentuk' : 'Terjual',
-            nominal: l.available_quantity * (l.price_per_unit || 800)
-          }))
+          listingsRes.map((l) => {
+            let step = 1;
+            let statusText = 'Menunggu Kluster';
+
+            if (l.status === 'completed' || l.status === 'sold') {
+              step = 4;
+              statusText = 'Terjual';
+            } else if (l.status === 'in_delivery' || l.status === 'matched') {
+              step = 3;
+              statusText = 'Siap Diambil';
+            } else if (isClusterReady || (Number(l.available_quantity) >= 500)) {
+              step = 2;
+              statusText = 'Kluster Terbentuk';
+            }
+
+            return {
+              id: l.id.slice(0, 8),
+              date: l.created_at ? l.created_at.split('T')[0] : '2026-09-05',
+              wasteType: l.title.split(' (Grade')[0] || l.title,
+              weight: l.available_quantity,
+              grade: l.grade_spec?.grade || 'A',
+              statusStep: step,
+              statusLabel: statusText,
+              nominal: l.available_quantity * (l.price_per_unit || 800)
+            };
+          })
         );
       } else {
         setSubmissions([]);
@@ -451,8 +468,8 @@ export default function SupplierDashboard() {
           <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--card-border)', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
               <div>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--primary-green)', letterSpacing: '0.04em' }}>
-                  KLUSTER WILAYAH JEPARA HUB #01
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--primary-green)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  {clusterData.cluster_name || `KLUSTER WILAYAH ${(user?.city || 'LOKAL').toUpperCase()} HUB #01`}
                 </span>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-dark)' }}>
                   Progress Agregasi Pasokan
@@ -490,7 +507,9 @@ export default function SupplierDashboard() {
 
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', backgroundColor: '#f8faf8', padding: '0.65rem 0.85rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span>Kontributor Teragregasi:</span>
-              <strong style={{ color: 'var(--text-dark)' }}>{clusterData.contributor_count || 4} Bengkel Mitra (Radius 8.2 km)</strong>
+              <strong style={{ color: 'var(--text-dark)' }}>
+                {clusterData.contributor_count || 1} Bengkel Mitra (Radius {clusterData.radius_km || 25} km)
+              </strong>
             </div>
           </div>
 

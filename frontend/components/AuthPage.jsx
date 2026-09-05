@@ -969,6 +969,36 @@ export default function AuthPage({ initialMode = 'register', onClose, onLoginSuc
                   </div>
                 </div>
 
+                {/* Quick Demo WhatsApp Numbers */}
+                <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem', fontSize: '0.75rem' }}>
+                  <div style={{ fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
+                    Nomor WhatsApp Uji Coba:
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setLoginPhone('081234567891')}
+                      style={{ padding: '5px', borderRadius: '4px', border: '1px solid #a7f3d0', backgroundColor: '#ecfdf5', color: '#047857', fontWeight: 700, cursor: 'pointer', fontSize: '0.72rem' }}
+                    >
+                      Pemasok Cimahi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLoginPhone('081298765432')}
+                      style={{ padding: '5px', borderRadius: '4px', border: '1px solid #a7f3d0', backgroundColor: '#ecfdf5', color: '#047857', fontWeight: 700, cursor: 'pointer', fontSize: '0.72rem' }}
+                    >
+                      Pemasok Neira
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLoginPhone('081234567892')}
+                      style={{ padding: '5px', borderRadius: '4px', border: '1px solid #bfdbfe', backgroundColor: '#eff6ff', color: '#1d4ed8', fontWeight: 700, cursor: 'pointer', fontSize: '0.72rem' }}
+                    >
+                      Pembeli
+                    </button>
+                  </div>
+                </div>
+
                 {otpError && (
                   <div style={{ fontSize: '0.8rem', color: 'var(--critical-red)', backgroundColor: 'var(--critical-red-light)', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
                     {otpError}
