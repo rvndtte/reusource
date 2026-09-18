@@ -3,21 +3,22 @@ import { db } from '@/lib/db';
 
 export async function GET(request) {
   try {
+    await db.ready();
     const { searchParams } = new URL(request.url);
     const buyerCompanyId = searchParams.get('buyer_company_id');
 
-    const orders = db.orders.find((o) => {
+    const orders = await db.orders.find((o) => {
       if (buyerCompanyId && o.buyer_company_id !== buyerCompanyId) return false;
       return true;
     });
 
-    const response = orders.map((o) => {
-      const items = db.order_items.find((item) => item.order_id === o.id);
-      const buyerCompany = db.companies.findById(o.buyer_company_id);
+    const response = await Promise.all(orders.map(async (o) => {
+      const items = await db.order_items.find((item) => item.order_id === o.id);
+      const buyerCompany = await db.companies.findById(o.buyer_company_id);
 
-      const itemsRes = items.map((item) => {
-        const listing = db.material_listings.findById(item.material_listing_id);
-        const supplierCompany = item.supplier_company_id ? db.companies.findById(item.supplier_company_id) : null;
+      const itemsRes = await Promise.all(items.map(async (item) => {
+        const listing = await db.material_listings.findById(item.material_listing_id);
+        const supplierCompany = item.supplier_company_id ? await db.companies.findById(item.supplier_company_id) : null;
         return {
           id: item.id,
           supplier_company_id: item.supplier_company_id,
@@ -28,7 +29,7 @@ export async function GET(request) {
           unit_price: item.unit_price,
           subtotal: item.subtotal,
         };
-      });
+      }));
 
       return {
         id: o.id,
@@ -42,7 +43,7 @@ export async function GET(request) {
         items: itemsRes,
         created_at: o.created_at,
       };
-    });
+    }));
 
     return NextResponse.json(response);
   } catch (error) {
@@ -55,6 +56,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    await db.ready();
     const { searchParams } = new URL(request.url);
     const body = await request.json().catch(() => ({}));
     const buyerCompanyId = body.buyer_company_id || searchParams.get('buyer_company_id') || searchParams.get('company_id') || 'comp-buy-nusantara';
@@ -65,17 +67,16 @@ export async function POST(request) {
 
       // If specific listing IDs are provided (from an aggregated cluster)
       if (Array.isArray(body.listing_ids) && body.listing_ids.length > 0) {
-        targetListings = body.listing_ids
-          .map((id) => db.material_listings.findById(id))
-          .filter((l) => l && l.available_quantity > 0);
+        const found = await Promise.all(body.listing_ids.map((id) => db.material_listings.findById(id)));
+        targetListings = found.filter((l) => l && l.available_quantity > 0);
       } else {
         const idToCheck = body.material_listing_id || body.listing_id || body.cluster_id;
-        const single = db.material_listings.findById(idToCheck);
+        const single = await db.material_listings.findById(idToCheck);
         if (single) {
           targetListings = [single];
         } else {
           // Check if idToCheck is a cluster prefix (e.g. KLS-CIM-A-...)
-          const activeListings = db.material_listings.find((l) => l.status === 'active' && l.available_quantity > 0);
+          const activeListings = await db.material_listings.find((l) => l.status === 'active' && l.available_quantity > 0);
           targetListings = activeListings;
         }
       }
@@ -92,7 +93,7 @@ export async function POST(request) {
       let remainingToBuy = Math.min(requestedQty, totalAvailable);
 
       // Create Order
-      const order = db.orders.create({
+      const order = await db.orders.create({
         buyer_company_id: buyerCompanyId,
         total_amount: 0,
         platform_fee: 0,
@@ -112,9 +113,9 @@ export async function POST(request) {
 
         const pricePerKg = Number(listing.price_per_unit || 800.0);
         const subtotal = takeQty * pricePerKg;
-        const supplierCompany = listing.company_id ? db.companies.findById(listing.company_id) : null;
+        const supplierCompany = listing.company_id ? await db.companies.findById(listing.company_id) : null;
 
-        const orderItem = db.order_items.create({
+        const orderItem = await db.order_items.create({
           order_id: order.id,
           supplier_company_id: listing.company_id,
           material_listing_id: listing.id,
@@ -138,7 +139,7 @@ export async function POST(request) {
 
         // Update listing remaining quantity
         const newQty = Math.max(0.0, listing.available_quantity - takeQty);
-        db.material_listings.update(listing.id, {
+        await db.material_listings.update(listing.id, {
           available_quantity: newQty,
           status: newQty === 0 ? 'sold_out' : 'active',
         });
@@ -147,7 +148,7 @@ export async function POST(request) {
       const platformFee = Math.round(totalMaterialCost * 0.03 * 100) / 100;
       const finalTotalAmount = totalMaterialCost + platformFee;
 
-      db.orders.update(order.id, {
+      await db.orders.update(order.id, {
         total_amount: finalTotalAmount,
         platform_fee: platformFee,
       });
@@ -157,7 +158,7 @@ export async function POST(request) {
       const grade = primaryListing?.grade_spec?.grade || 'A';
       const co2eFactor = grade === 'A' ? 1.25 : 1.1;
 
-      db.impact_logs.create({
+      await db.impact_logs.create({
         order_id: order.id,
         buyer_company_id: order.buyer_company_id,
         category_id: primaryListing?.category_id || 'cat-wood-001',
@@ -183,7 +184,7 @@ export async function POST(request) {
 
     // Case 2: Aggregated supply proposal conversion
     const aggregatedSupplyId = body.aggregated_supply_id;
-    const agg = db.aggregated_supplies.findById(aggregatedSupplyId);
+    const agg = await db.aggregated_supplies.findById(aggregatedSupplyId);
     if (!agg) {
       return NextResponse.json(
         { detail: 'Aggregated supply proposal not found' },
@@ -198,12 +199,12 @@ export async function POST(request) {
       );
     }
 
-    const buyingReq = db.buying_requests.findById(agg.buying_request_id);
-    const aggItems = db.aggregated_supply_items.find(
+    const buyingReq = await db.buying_requests.findById(agg.buying_request_id);
+    const aggItems = await db.aggregated_supply_items.find(
       (item) => item.aggregated_supply_id === agg.id
     );
 
-    const order = db.orders.create({
+    const order = await db.orders.create({
       aggregated_supply_id: agg.id,
       buying_request_id: buyingReq?.id,
       buyer_company_id: buyingReq?.buyer_company_id || buyerCompanyId,
@@ -213,8 +214,8 @@ export async function POST(request) {
     });
 
     for (const item of aggItems) {
-      const listing = db.material_listings.findById(item.material_listing_id);
-      db.order_items.create({
+      const listing = await db.material_listings.findById(item.material_listing_id);
+      await db.order_items.create({
         order_id: order.id,
         supplier_company_id: listing ? listing.company_id : null,
         material_listing_id: item.material_listing_id,
@@ -225,20 +226,20 @@ export async function POST(request) {
 
       if (listing) {
         const newQty = Math.max(0.0, listing.available_quantity - item.allocated_quantity);
-        db.material_listings.update(listing.id, {
+        await db.material_listings.update(listing.id, {
           available_quantity: newQty,
           status: newQty === 0 ? 'sold_out' : 'partially_aggregated',
         });
       }
     }
 
-    db.aggregated_supplies.update(agg.id, { status: 'converted_to_order' });
+    await db.aggregated_supplies.update(agg.id, { status: 'converted_to_order' });
     if (buyingReq) {
-      db.buying_requests.update(buyingReq.id, { status: 'fulfilled' });
+      await db.buying_requests.update(buyingReq.id, { status: 'fulfilled' });
     }
 
     // ESG log for Case 2
-    db.impact_logs.create({
+    await db.impact_logs.create({
       order_id: order.id,
       buyer_company_id: order.buyer_company_id,
       category_id: buyingReq?.category_id || 'cat-wood-001',
@@ -248,10 +249,10 @@ export async function POST(request) {
       buyer_cost_saved: agg.total_material_cost * 0.15,
     });
 
-    const createdItems = db.order_items.find((item) => item.order_id === order.id);
-    const itemsRes = createdItems.map((item) => {
-      const listing = db.material_listings.findById(item.material_listing_id);
-      const supplierCompany = item.supplier_company_id ? db.companies.findById(item.supplier_company_id) : null;
+    const createdItems = await db.order_items.find((item) => item.order_id === order.id);
+    const itemsRes = await Promise.all(createdItems.map(async (item) => {
+      const listing = await db.material_listings.findById(item.material_listing_id);
+      const supplierCompany = item.supplier_company_id ? await db.companies.findById(item.supplier_company_id) : null;
       return {
         id: item.id,
         supplier_company_id: item.supplier_company_id,
@@ -262,9 +263,9 @@ export async function POST(request) {
         unit_price: item.unit_price,
         subtotal: item.subtotal,
       };
-    });
+    }));
 
-    const buyerCompany = buyingReq ? db.companies.findById(buyingReq.buyer_company_id) : null;
+    const buyerCompany = buyingReq ? await db.companies.findById(buyingReq.buyer_company_id) : null;
 
     return NextResponse.json(
       {

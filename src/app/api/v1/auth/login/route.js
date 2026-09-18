@@ -4,15 +4,16 @@ import { createAccessToken, verifyPassword } from '@/lib/auth';
 
 export async function POST(request) {
   try {
+    await db.ready();
     const body = await request.json().catch(() => ({}));
     const email = (body.email || '').trim().toLowerCase();
     const password = body.password || '';
 
-    let user = db.users.findOne((u) => (u.email || '').toLowerCase() === email);
+    let user = await db.users.findOne((u) => (u.email || '').toLowerCase() === email);
     if (!user && (email === 'verifier@reusource.id' || email === 'admin@bylink.id')) {
       const bcrypt = (await import('bcryptjs')).default;
-      const adminComp = db.companies.findOne(() => true);
-      user = db.users.create({
+      const adminComp = await db.companies.findOne(() => true);
+      user = await db.users.create({
         id: email === 'admin@bylink.id' ? 'usr-demo-admin' : 'usr-demo-verifier',
         email,
         password_hash: bcrypt.hashSync(email === 'admin@bylink.id' ? 'admin123' : 'password123', 10),
@@ -39,7 +40,7 @@ export async function POST(request) {
       );
     }
 
-    const company = user.company_id ? db.companies.findById(user.company_id) : null;
+    const company = user.company_id ? await db.companies.findById(user.company_id) : null;
     const token = await createAccessToken(user.id);
 
     return NextResponse.json({

@@ -3,8 +3,9 @@ import { db } from '@/lib/db';
 
 export async function GET(request, { params }) {
   try {
+    await db.ready();
     const { id } = await params;
-    const verification = db.verifications.findOne((v) => v.order_id === id);
+    const verification = await db.verifications.findOne((v) => v.order_id === id);
 
     if (!verification) {
       return NextResponse.json(
@@ -33,11 +34,12 @@ export async function GET(request, { params }) {
 
 export async function POST(request, { params }) {
   try {
+    await db.ready();
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
     const targetStatus = body.target_status || 'field_verified';
 
-    const order = db.orders.findById(id);
+    const order = await db.orders.findById(id);
     if (!order) {
       return NextResponse.json(
         { detail: 'Pesanan tidak ditemukan' },
@@ -46,13 +48,13 @@ export async function POST(request, { params }) {
     }
 
     // Update order lifecycle status
-    db.orders.update(order.id, {
+    await db.orders.update(order.id, {
       order_status: targetStatus,
     });
 
-    let verification = db.verifications.findOne((v) => v.order_id === id);
+    let verification = await db.verifications.findOne((v) => v.order_id === id);
     if (!verification) {
-      verification = db.verifications.create({
+      verification = await db.verifications.create({
         order_id: order.id,
         verifier_user_id: 'usr-demo-verifier',
         status: targetStatus === 'completed' ? 'approved' : 'in_review',
@@ -61,7 +63,7 @@ export async function POST(request, { params }) {
         inspection_photos: [],
       });
     } else {
-      verification = db.verifications.update(verification.id, {
+      verification = await db.verifications.update(verification.id, {
         status: targetStatus === 'completed' ? 'approved' : 'in_review',
         quality_notes: body.notes || verification.quality_notes,
       });

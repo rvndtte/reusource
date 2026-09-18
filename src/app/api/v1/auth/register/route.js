@@ -5,12 +5,13 @@ import { normalizePhone } from '@/lib/phone';
 
 export async function POST(request) {
   try {
+    await db.ready();
     const body = await request.json().catch(() => ({}));
     const email = (body.email || '').trim().toLowerCase();
     const rawPhone = body.phone || '';
     const phone = rawPhone ? normalizePhone(rawPhone) : null;
 
-    const existing = db.users.findOne((u) => (u.email || '').toLowerCase() === email);
+    const existing = await db.users.findOne((u) => (u.email || '').toLowerCase() === email);
     if (existing) {
       return NextResponse.json(
         { detail: 'Email sudah terdaftar.' },
@@ -18,7 +19,7 @@ export async function POST(request) {
       );
     }
 
-    const company = db.companies.create({
+    const company = await db.companies.create({
       name: (body.company_name || '').trim(),
       company_type: body.company_type || 'umkm_supplier',
       phone: phone || '',
@@ -31,7 +32,7 @@ export async function POST(request) {
     });
 
     const pwdHash = await hashPassword(body.password || 'password123');
-    const user = db.users.create({
+    const user = await db.users.create({
       email: email,
       password_hash: pwdHash,
       full_name: (body.full_name || '').trim(),

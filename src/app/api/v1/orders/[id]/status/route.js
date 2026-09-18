@@ -3,10 +3,11 @@ import { db } from '@/lib/db';
 
 export async function PATCH(request, { params }) {
   try {
+    await db.ready();
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
 
-    const order = db.orders.findById(id);
+    const order = await db.orders.findById(id);
     if (!order) {
       return NextResponse.json(
         { detail: 'Order not found' },
@@ -14,16 +15,16 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const updated = db.orders.update(order.id, {
+    const updated = await db.orders.update(order.id, {
       order_status: body.order_status || order.order_status,
     });
 
-    const items = db.order_items.find((item) => item.order_id === updated.id);
-    const buyerCompany = db.companies.findById(updated.buyer_company_id);
+    const items = await db.order_items.find((item) => item.order_id === updated.id);
+    const buyerCompany = await db.companies.findById(updated.buyer_company_id);
 
-    const itemsRes = items.map((item) => {
-      const listing = db.material_listings.findById(item.material_listing_id);
-      const supplierCompany = item.supplier_company_id ? db.companies.findById(item.supplier_company_id) : null;
+    const itemsRes = await Promise.all(items.map(async (item) => {
+      const listing = await db.material_listings.findById(item.material_listing_id);
+      const supplierCompany = item.supplier_company_id ? await db.companies.findById(item.supplier_company_id) : null;
       return {
         id: item.id,
         supplier_company_id: item.supplier_company_id,
@@ -34,7 +35,7 @@ export async function PATCH(request, { params }) {
         unit_price: item.unit_price,
         subtotal: item.subtotal,
       };
-    });
+    }));
 
     return NextResponse.json({
       id: updated.id,

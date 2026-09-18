@@ -6,6 +6,7 @@ import { normalizePhone } from '@/lib/phone';
 
 export async function POST(request) {
   try {
+    await db.ready();
     const body = await request.json().catch(() => ({}));
     const rawPhone = body.phone || '';
     const phone = normalizePhone(rawPhone);
@@ -29,9 +30,9 @@ export async function POST(request) {
     }
 
     // Check if user with this phone already exists
-    const existingUser = db.users.findOne((u) => normalizePhone(u.phone) === phone);
+    const existingUser = await db.users.findOne((u) => normalizePhone(u.phone) === phone);
     if (existingUser) {
-      const company = existingUser.company_id ? db.companies.findById(existingUser.company_id) : null;
+      const company = existingUser.company_id ? await db.companies.findById(existingUser.company_id) : null;
       const token = await createAccessToken(existingUser.id);
       return NextResponse.json({
         access_token: token,
@@ -62,7 +63,7 @@ export async function POST(request) {
       : (addressStr.includes(',') ? addressStr.split(',').slice(-1)[0].trim() : 'Indonesia');
 
     // Create Company
-    const company = db.companies.create({
+    const company = await db.companies.create({
       name: businessName,
       company_type: compType,
       address: addressStr,
@@ -80,7 +81,7 @@ export async function POST(request) {
     const pwdHash = await hashPassword('wa_otp_secure_login');
 
     // Create User
-    const user = db.users.create({
+    const user = await db.users.create({
       email: syntheticEmail,
       password_hash: pwdHash,
       full_name: contactPerson,

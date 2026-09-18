@@ -3,7 +3,7 @@ import { ImpactCalculatorService } from '@/lib/impactEngine';
 
 export async function GET() {
   try {
-    const metrics = ImpactCalculatorService.getImpactDashboardMetrics();
+    const metrics = await ImpactCalculatorService.getImpactDashboardMetrics();
     return NextResponse.json(metrics);
   } catch (error) {
     return NextResponse.json(

@@ -50,12 +50,13 @@ export async function getCurrentUser(request) {
   const payload = await verifyAccessToken(token);
   if (!payload || !payload.sub) return null;
 
-  const user = db.users.findById(payload.sub);
+  await db.ready();
+  const user = await db.users.findById(payload.sub);
   if (!user || user.is_active === false) {
     return null;
   }
 
-  const company = user.company_id ? db.companies.findById(user.company_id) : null;
+  const company = user.company_id ? await db.companies.findById(user.company_id) : null;
   return {
     ...user,
     company,

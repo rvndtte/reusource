@@ -66,14 +66,14 @@ export async function POST(request) {
     }
 
     // Category
-    let category = db.categories.findOne((c) =>
+    let category = await db.categories.findOne((c) =>
       c.name.toLowerCase().includes((body.waste_type || '').split(' ')[0].toLowerCase())
     );
     if (!category) {
-      category = db.categories.findOne(() => true);
+      category = await db.categories.findOne(() => true);
     }
     if (!category) {
-      category = db.categories.create({
+      category = await db.categories.create({
         name: 'Limbah Kayu & Serbuk',
         description: 'Biomassa serbuk gergaji dan serutan kayu industri',
         default_unit: 'kg',
@@ -87,9 +87,9 @@ export async function POST(request) {
     const co2eFactor = CO2E_FACTOR_TABLE[body.waste_type] || 1.1;
     const co2eSaved = weightKg * co2eFactor;
 
-    const comp = currentUser.company || db.companies.findById(currentUser.company_id);
+    const comp = currentUser.company || (await db.companies.findById(currentUser.company_id));
 
-    const listing = db.material_listings.create({
+    const listing = await db.material_listings.create({
       company_id: comp ? comp.id : currentUser.company_id,
       category_id: category.id,
       title: `${body.waste_type} (Grade ${grade})`,

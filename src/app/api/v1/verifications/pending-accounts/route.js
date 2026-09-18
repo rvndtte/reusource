@@ -14,9 +14,9 @@ export async function GET(request) {
         const registeredList = JSON.parse(regAccountsHeader);
         for (const item of (registeredList || [])) {
           if (item && item.company_name) {
-            const existingComp = item.company_id ? db.companies.findById(item.company_id) : db.companies.findOne((c) => c.name.toLowerCase() === item.company_name.toLowerCase());
+            const existingComp = item.company_id ? await db.companies.findById(item.company_id) : await db.companies.findOne((c) => c.name.toLowerCase() === item.company_name.toLowerCase());
             if (!existingComp) {
-              const newComp = db.companies.create({
+              const newComp = await db.companies.create({
                 id: item.company_id || undefined,
                 name: item.company_name,
                 company_type: item.role === 'buyer_admin' ? 'enterprise_buyer' : 'umkm_supplier',
@@ -32,7 +32,7 @@ export async function GET(request) {
                 created_at: item.created_at || new Date().toISOString(),
               });
 
-              db.users.create({
+              await db.users.create({
                 email: item.email || `wa_${item.phone}@reusource.id`,
                 full_name: item.full_name || 'Mitra Penanggung Jawab',
                 phone: item.phone ? normalizePhone(item.phone) : '',
@@ -41,7 +41,7 @@ export async function GET(request) {
                 is_active: true,
               });
             } else if (item.verification_status && existingComp.verification_status !== item.verification_status) {
-              db.companies.update(existingComp.id, {
+              await db.companies.update(existingComp.id, {
                 verification_status: item.verification_status,
               });
             }
@@ -52,12 +52,12 @@ export async function GET(request) {
       }
     }
 
-    const companies = db.companies.find(
+    const companies = await db.companies.find(
       (c) => c.verification_status === 'pending_verification'
     );
 
-    const results = companies.map((c) => {
-      const primaryUser = db.users.findOne((u) => u.company_id === c.id);
+    const results = await Promise.all(companies.map(async (c) => {
+      const primaryUser = await db.users.findOne((u) => u.company_id === c.id);
       return {
         company_id: c.id,
         company_name: c.name,
@@ -76,7 +76,7 @@ export async function GET(request) {
         verification_notes: c.verification_notes || null,
         created_at: c.created_at || new Date().toISOString(),
       };
-    });
+    }));
 
     return NextResponse.json(results);
   } catch (error) {

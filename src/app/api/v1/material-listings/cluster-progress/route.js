@@ -19,10 +19,11 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
 
 export async function GET(request) {
   try {
+    await db.ready();
     const user = await getCurrentUser(request);
     const userComp = user?.company;
 
-    const allActiveListings = db.material_listings.find((l) => l.status === 'active');
+    const allActiveListings = await db.material_listings.find((l) => l.status === 'active');
     
     let filteredListings = allActiveListings;
     let clusterName = 'Kluster Wilayah Regional Hub #01';

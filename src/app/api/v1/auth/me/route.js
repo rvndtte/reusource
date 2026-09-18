@@ -21,7 +21,7 @@ export async function GET(request) {
 
         if (matched && matched.verification_status) {
           if (comp && comp.verification_status !== matched.verification_status) {
-            comp = db.companies.update(comp.id, { verification_status: matched.verification_status }) || comp;
+            comp = (await db.companies.update(comp.id, { verification_status: matched.verification_status })) || comp;
           }
         }
       } catch (e) {
@@ -83,7 +83,7 @@ export async function PUT(request) {
     if (full_name !== undefined) userUpdates.full_name = full_name;
     if (phone !== undefined) userUpdates.phone = phone;
     if (Object.keys(userUpdates).length > 0) {
-      db.users.update(user.id, userUpdates);
+      await db.users.update(user.id, userUpdates);
     }
 
     // 2. Update company fields
@@ -100,13 +100,13 @@ export async function PUT(request) {
       if (npwp !== undefined) compUpdates.npwp = npwp;
 
       if (Object.keys(compUpdates).length > 0) {
-        db.companies.update(user.company_id, compUpdates);
+        await db.companies.update(user.company_id, compUpdates);
       }
     }
 
     // 3. Return updated profile
-    const updatedUser = db.users.findById(user.id);
-    const updatedComp = user.company_id ? db.companies.findById(user.company_id) : null;
+    const updatedUser = await db.users.findById(user.id);
+    const updatedComp = user.company_id ? await db.companies.findById(user.company_id) : null;
     const isSeedApproved = ['comp-sup-cimahi', 'comp-sup-banda', 'comp-buy-nusantara'].includes(updatedUser.company_id) || updatedUser.role === 'admin';
     const finalVerificationStatus = updatedComp?.verification_status || (isSeedApproved ? 'approved' : 'pending_verification');
 

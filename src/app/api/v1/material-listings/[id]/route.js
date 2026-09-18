@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
     const { id } = await params;
     const currentUser = await requireUser(request);
 
-    const listing = db.material_listings.findById(id);
+    const listing = await db.material_listings.findById(id);
     if (!listing) {
       return NextResponse.json(
         { detail: 'Material listing not found' },
@@ -25,8 +25,8 @@ export async function GET(request, { params }) {
       );
     }
 
-    const company = db.companies.findById(listing.company_id);
-    const category = db.categories.findById(listing.category_id);
+    const company = await db.companies.findById(listing.company_id);
+    const category = await db.categories.findById(listing.category_id);
 
     return NextResponse.json({
       id: listing.id,

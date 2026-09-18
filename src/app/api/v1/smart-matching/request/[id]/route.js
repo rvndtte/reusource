@@ -3,20 +3,21 @@ import { db } from '@/lib/db';
 
 export async function GET(request, { params }) {
   try {
+    await db.ready();
     const { id } = await params;
-    const aggregations = db.aggregated_supplies.find(
+    const aggregations = await db.aggregated_supplies.find(
       (agg) => agg.buying_request_id === id
     );
 
-    const result = aggregations.map((agg) => {
-      const buyingReq = db.buying_requests.findById(agg.buying_request_id);
-      const supplyItems = db.aggregated_supply_items.find(
+    const result = await Promise.all(aggregations.map(async (agg) => {
+      const buyingReq = await db.buying_requests.findById(agg.buying_request_id);
+      const supplyItems = await db.aggregated_supply_items.find(
         (item) => item.aggregated_supply_id === agg.id
       );
 
-      const itemsRes = supplyItems.map((item) => {
-        const listing = db.material_listings.findById(item.material_listing_id);
-        const supplierCompany = listing ? db.companies.findById(listing.company_id) : null;
+      const itemsRes = await Promise.all(supplyItems.map(async (item) => {
+        const listing = await db.material_listings.findById(item.material_listing_id);
+        const supplierCompany = listing ? await db.companies.findById(listing.company_id) : null;
         return {
           id: item.id,
           material_listing_id: item.material_listing_id,
@@ -28,7 +29,7 @@ export async function GET(request, { params }) {
           subtotal: item.subtotal,
           distance_km: item.distance_km,
         };
-      });
+      }));
 
       return {
         id: agg.id,
@@ -44,7 +45,7 @@ export async function GET(request, { params }) {
         items: itemsRes,
         created_at: agg.created_at,
       };
-    });
+    }));
 
     return NextResponse.json(result);
   } catch (error) {

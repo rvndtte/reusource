@@ -3,7 +3,8 @@ import { db } from '@/lib/db';
 
 export async function GET() {
   try {
-    const categories = db.categories.find();
+    await db.ready();
+    const categories = await db.categories.find();
     return NextResponse.json(categories);
   } catch (error) {
     return NextResponse.json(
@@ -15,8 +16,9 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    await db.ready();
     const body = await request.json().catch(() => ({}));
-    const category = db.categories.create({
+    const category = await db.categories.create({
       name: body.name,
       description: body.description || '',
       default_unit: body.default_unit || 'ton',

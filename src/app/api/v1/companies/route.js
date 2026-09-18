@@ -3,7 +3,8 @@ import { db } from '@/lib/db';
 
 export async function GET() {
   try {
-    const companies = db.companies.find();
+    await db.ready();
+    const companies = await db.companies.find();
     return NextResponse.json(companies);
   } catch (error) {
     return NextResponse.json(

@@ -1,47 +1,68 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import fs from 'fs';
-import path from 'path';
-import { normalizePhone } from './phone.js';
+import { neon } from '@neondatabase/serverless';
 
 // Pre-hashed bcrypt for 'password123' and 'wa_otp_secure_login'
 const DEMO_PASSWORD_HASH = bcrypt.hashSync('password123', 10);
-const WA_OTP_PASSWORD_HASH = bcrypt.hashSync('wa_otp_secure_login', 10);
 
-const DB_FILE_PATH = process.env.VERCEL
-  ? path.join('/tmp', 'reusource_db_store.json')
-  : path.join(process.cwd(), '.db_storage.json');
+const CONNECTION_STRING =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.POSTGRES_PRISMA_URL;
+
+if (!CONNECTION_STRING) {
+  throw new Error(
+    'No Postgres connection string found. Set DATABASE_URL (or POSTGRES_URL) in your environment / Vercel project storage settings.'
+  );
+}
+
+const sql = neon(CONNECTION_STRING);
+
+const TABLE_NAMES = [
+  'categories',
+  'companies',
+  'users',
+  'material_listings',
+  'buying_requests',
+  'aggregated_supplies',
+  'aggregated_supply_items',
+  'orders',
+  'order_items',
+  'verifications',
+  'impact_logs',
+];
 
 function generateId() {
   return crypto.randomUUID();
 }
 
-function createTable(onMutate = () => {}) {
-  const items = new Map();
+// Postgres identifiers can't be parameterized, so this guards table() against
+// ever being called with anything other than one of our own fixed table names.
+function assertKnownTable(name) {
+  if (!TABLE_NAMES.includes(name)) {
+    throw new Error(`Unknown table: ${name}`);
+  }
+}
+
+function pgTable(tableName) {
+  assertKnownTable(tableName);
 
   return {
-    find: (predicate = () => true) => {
-      const results = [];
-      for (const item of items.values()) {
-        if (predicate(item)) {
-          results.push({ ...item });
-        }
-      }
-      return results;
+    async find(predicate = () => true) {
+      const rows = await sql.query(`SELECT data FROM ${tableName}`);
+      return rows.map((r) => ({ ...r.data })).filter(predicate);
     },
-    findById: (id) => {
-      const item = items.get(id);
-      return item ? { ...item } : null;
+    async findById(id) {
+      const rows = await sql.query(`SELECT data FROM ${tableName} WHERE id = $1`, [id]);
+      return rows.length > 0 ? { ...rows[0].data } : null;
     },
-    findOne: (predicate) => {
-      for (const item of items.values()) {
-        if (predicate(item)) {
-          return { ...item };
-        }
-      }
-      return null;
+    async findOne(predicate) {
+      const rows = await sql.query(`SELECT data FROM ${tableName}`);
+      const match = rows.map((r) => r.data).find(predicate);
+      return match ? { ...match } : null;
     },
-    create: (data) => {
+    async create(data) {
       const id = data.id || generateId();
       const now = new Date().toISOString();
       const record = {
@@ -50,160 +71,121 @@ function createTable(onMutate = () => {}) {
         created_at: data.created_at || now,
         updated_at: data.updated_at || now,
       };
-      items.set(id, record);
-      onMutate();
+      await sql.query(
+        `INSERT INTO ${tableName} (id, data) VALUES ($1, $2)
+         ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
+        [id, JSON.stringify(record)]
+      );
       return { ...record };
     },
-    update: (id, updates) => {
-      const existing = items.get(id);
-      if (!existing) return null;
+    async update(id, updates) {
+      const rows = await sql.query(`SELECT data FROM ${tableName} WHERE id = $1`, [id]);
+      if (rows.length === 0) return null;
       const updated = {
-        ...existing,
+        ...rows[0].data,
         ...updates,
         updated_at: new Date().toISOString(),
       };
-      items.set(id, updated);
-      onMutate();
+      await sql.query(`UPDATE ${tableName} SET data = $2 WHERE id = $1`, [id, JSON.stringify(updated)]);
       return { ...updated };
     },
-    delete: (id) => {
-      const res = items.delete(id);
-      onMutate();
-      return res;
+    async delete(id) {
+      const rows = await sql.query(`DELETE FROM ${tableName} WHERE id = $1 RETURNING id`, [id]);
+      return rows.length > 0;
     },
-    clear: () => {
-      items.clear();
-      onMutate();
+    async clear() {
+      await sql.query(`DELETE FROM ${tableName}`);
     },
-    count: (predicate = () => true) => {
-      let count = 0;
-      for (const item of items.values()) {
-        if (predicate(item)) count++;
+    async count(predicate = () => true) {
+      if (predicate.length === 0 && predicate.toString().includes('=> true')) {
+        const rows = await sql.query(`SELECT COUNT(*)::int AS n FROM ${tableName}`);
+        return rows[0]?.n || 0;
       }
-      return count;
+      const rows = await sql.query(`SELECT data FROM ${tableName}`);
+      return rows.map((r) => r.data).filter(predicate).length;
     },
-    loadAll: (arrayData) => {
-      items.clear();
-      if (Array.isArray(arrayData)) {
-        for (const item of arrayData) {
-          if (item && item.id) {
-            items.set(item.id, { ...item });
-          }
-        }
-      }
+    async getAll() {
+      const rows = await sql.query(`SELECT data FROM ${tableName}`);
+      return rows.map((r) => ({ ...r.data }));
     },
-    getAll: () => {
-      return Array.from(items.values());
-    },
-    rawMap: items,
   };
 }
 
 class Database {
   constructor() {
-    const notifyMutation = () => this.saveToFile();
+    this.categories = pgTable('categories');
+    this.companies = pgTable('companies');
+    this.users = pgTable('users');
+    this.material_listings = pgTable('material_listings');
+    this.buying_requests = pgTable('buying_requests');
+    this.aggregated_supplies = pgTable('aggregated_supplies');
+    this.aggregated_supply_items = pgTable('aggregated_supply_items');
+    this.orders = pgTable('orders');
+    this.order_items = pgTable('order_items');
+    this.verifications = pgTable('verifications');
+    this.impact_logs = pgTable('impact_logs');
 
-    this.categories = createTable(notifyMutation);
-    this.companies = createTable(notifyMutation);
-    this.users = createTable(notifyMutation);
-    this.material_listings = createTable(notifyMutation);
-    this.buying_requests = createTable(notifyMutation);
-    this.aggregated_supplies = createTable(notifyMutation);
-    this.aggregated_supply_items = createTable(notifyMutation);
-    this.orders = createTable(notifyMutation);
-    this.order_items = createTable(notifyMutation);
-    this.verifications = createTable(notifyMutation);
-    this.impact_logs = createTable(notifyMutation);
+    this._readyPromise = null;
+  }
 
-    const loaded = this.loadFromFile();
-    if (!loaded || this.companies.count() === 0) {
-      this.seedInitialData();
-      this.saveToFile();
+  // Called (and awaited) at the top of every API route before any db.<table>
+  // call, so the schema/seed exists before the first real query runs -
+  // memoized per warm serverless instance so it's a no-op after the first hit.
+  async ready() {
+    if (!this._readyPromise) {
+      this._readyPromise = this._ensureSchemaAndSeed();
+    }
+    return this._readyPromise;
+  }
+
+  async _ensureSchemaAndSeed() {
+    for (const table of TABLE_NAMES) {
+      await sql.query(
+        `CREATE TABLE IF NOT EXISTS ${table} (id TEXT PRIMARY KEY, data JSONB NOT NULL)`
+      );
+    }
+
+    const companyCount = await this.companies.count();
+    if (companyCount === 0) {
+      await this.seedInitialData();
+      return;
+    }
+
+    // Auto-upgrade missing essential test accounts/requests (kept from the
+    // previous file-backed store so already-seeded environments stay in sync).
+    if (!(await this.users.findById('usr-demo-verifier'))) {
+      await this.users.create({
+        id: 'usr-demo-verifier',
+        email: 'verifier@reusource.id',
+        password_hash: DEMO_PASSWORD_HASH,
+        full_name: 'Audit Verifikator Lapangan',
+        phone: '081122334455',
+        role: 'verifier',
+        company_id: 'comp-sup-cimahi',
+        is_active: true,
+      });
+    }
+    if (!(await this.buying_requests.findById('req-001'))) {
+      await this.buying_requests.create({
+        id: 'req-001',
+        buyer_company_id: 'comp-buy-nusantara',
+        category_id: 'cat-wood-001',
+        target_quantity: 500.0,
+        fulfilled_quantity: 0.0,
+        unit: 'kg',
+        max_price_per_unit: 1000.0,
+        delivery_address: 'Kawasan Industri GIIC Cikarang',
+        latitude: -6.3005,
+        longitude: 107.169,
+        required_grade: 'A',
+        status: 'open',
+      });
     }
   }
 
-  saveToFile() {
-    try {
-      const snapshot = {
-        categories: this.categories.getAll(),
-        companies: this.companies.getAll(),
-        users: this.users.getAll(),
-        material_listings: this.material_listings.getAll(),
-        buying_requests: this.buying_requests.getAll(),
-        aggregated_supplies: this.aggregated_supplies.getAll(),
-        aggregated_supply_items: this.aggregated_supply_items.getAll(),
-        orders: this.orders.getAll(),
-        order_items: this.order_items.getAll(),
-        verifications: this.verifications.getAll(),
-        impact_logs: this.impact_logs.getAll(),
-        saved_at: new Date().toISOString(),
-      };
-      fs.writeFileSync(DB_FILE_PATH, JSON.stringify(snapshot, null, 2), 'utf-8');
-    } catch (err) {
-      console.warn('Could not persist database to disk:', err.message);
-    }
-  }
-
-  loadFromFile() {
-    try {
-      if (fs.existsSync(DB_FILE_PATH)) {
-        const raw = fs.readFileSync(DB_FILE_PATH, 'utf-8');
-        const data = JSON.parse(raw);
-        if (data && data.companies && data.companies.length > 0) {
-          this.categories.loadAll(data.categories);
-          this.companies.loadAll(data.companies);
-          this.users.loadAll(data.users);
-          this.material_listings.loadAll(data.material_listings);
-          this.buying_requests.loadAll(data.buying_requests);
-          this.aggregated_supplies.loadAll(data.aggregated_supplies);
-          this.aggregated_supply_items.loadAll(data.aggregated_supply_items);
-          this.orders.loadAll(data.orders);
-          this.order_items.loadAll(data.order_items);
-          this.verifications.loadAll(data.verifications);
-          this.impact_logs.loadAll(data.impact_logs);
-
-          // Auto-upgrade missing essential test accounts/requests
-          if (!this.users.findById('usr-demo-verifier')) {
-            this.users.create({
-              id: 'usr-demo-verifier',
-              email: 'verifier@reusource.id',
-              password_hash: DEMO_PASSWORD_HASH,
-              full_name: 'Audit Verifikator Lapangan',
-              phone: '081122334455',
-              role: 'verifier',
-              company_id: 'comp-sup-cimahi',
-              is_active: true,
-            });
-          }
-          if (!this.buying_requests.findById('req-001')) {
-            this.buying_requests.create({
-              id: 'req-001',
-              buyer_company_id: 'comp-buy-nusantara',
-              category_id: 'cat-wood-001',
-              target_quantity: 500.0,
-              fulfilled_quantity: 0.0,
-              unit: 'kg',
-              max_price_per_unit: 1000.0,
-              delivery_address: 'Kawasan Industri GIIC Cikarang',
-              latitude: -6.3005,
-              longitude: 107.1690,
-              required_grade: 'A',
-              status: 'open',
-            });
-          }
-
-          return true;
-        }
-      }
-    } catch (err) {
-      console.warn('Could not load database from disk:', err.message);
-    }
-    return false;
-  }
-
-  seedInitialData() {
+  async seedInitialData() {
     // 1. Biomass & Wood Categories
-    const catWoodSawdust = this.categories.create({
+    const catWoodSawdust = await this.categories.create({
       id: 'cat-wood-001',
       name: 'Serbuk Serutan Kayu Jati',
       description: 'Biomassa serbuk gergaji dan serutan kayu jati industri mebel',
@@ -211,7 +193,7 @@ class Database {
       target_industry: 'Wood Pellet, Briket, Boiler Co-firing',
     });
 
-    this.categories.create({
+    await this.categories.create({
       id: 'cat-wood-002',
       name: 'Wood Chips / Serpihan Kayu',
       description: 'Serpihan kayu sengon & mahoni untuk boiler dan pulp',
@@ -221,7 +203,7 @@ class Database {
 
     // 2. Companies
     // 2.1 Pemasok 1: Cimahi, Jawa Barat (650 kg Grade A)
-    const sup1 = this.companies.create({
+    const sup1 = await this.companies.create({
       id: 'comp-sup-cimahi',
       name: 'UD Kayu Lestari Cimahi',
       company_type: 'umkm_supplier',
@@ -236,7 +218,7 @@ class Database {
     });
 
     // 2.2 Pemasok 2: Banda Neira, Maluku (120 kg Grade A)
-    const sup2 = this.companies.create({
+    const sup2 = await this.companies.create({
       id: 'comp-sup-banda',
       name: 'UD Banda Biomassa Neira',
       company_type: 'umkm_supplier',
@@ -251,7 +233,7 @@ class Database {
     });
 
     // 2.3 Pembeli Industri: Cikarang / Bekasi
-    const buyer1 = this.companies.create({
+    const buyer1 = await this.companies.create({
       id: 'comp-buy-nusantara',
       name: 'PT Biomassa Nusantara Energi',
       company_type: 'enterprise_buyer',
@@ -260,12 +242,12 @@ class Database {
       city: 'Bekasi',
       province: 'Jawa Barat',
       latitude: -6.3005,
-      longitude: 107.1690,
+      longitude: 107.169,
       verification_status: 'approved',
     });
 
     // 3. User Accounts (Pre-hashed bcrypt)
-    this.users.create({
+    await this.users.create({
       id: 'usr-demo-admin',
       email: 'admin@bylink.id',
       password_hash: bcrypt.hashSync('admin123', 10),
@@ -276,7 +258,7 @@ class Database {
       is_active: true,
     });
 
-    this.users.create({
+    await this.users.create({
       id: 'usr-demo-verifier',
       email: 'verifier@reusource.id',
       password_hash: DEMO_PASSWORD_HASH,
@@ -287,7 +269,7 @@ class Database {
       is_active: true,
     });
 
-    this.users.create({
+    await this.users.create({
       id: 'usr-demo-sup',
       email: 'test@supplier.com',
       password_hash: DEMO_PASSWORD_HASH,
@@ -298,7 +280,7 @@ class Database {
       is_active: true,
     });
 
-    this.users.create({
+    await this.users.create({
       id: 'usr-demo-sup2',
       email: 'supplier.banda@reusource.id',
       password_hash: DEMO_PASSWORD_HASH,
@@ -309,7 +291,7 @@ class Database {
       is_active: true,
     });
 
-    this.users.create({
+    await this.users.create({
       id: 'usr-demo-buy',
       email: 'test@buyer.com',
       password_hash: DEMO_PASSWORD_HASH,
@@ -321,7 +303,7 @@ class Database {
     });
 
     // 4. Initial Buying Request for Smart Matching
-    this.buying_requests.create({
+    await this.buying_requests.create({
       id: 'req-001',
       buyer_company_id: buyer1.id,
       category_id: catWoodSawdust.id,
@@ -337,7 +319,7 @@ class Database {
     });
 
     // 5. Material Listings (2 Supplier Serbuk Serutan Jati Grade A)
-    this.material_listings.create({
+    await this.material_listings.create({
       id: 'list-001',
       company_id: sup1.id,
       category_id: catWoodSawdust.id,
@@ -362,7 +344,7 @@ class Database {
       photos: [],
     });
 
-    this.material_listings.create({
+    await this.material_listings.create({
       id: 'list-002',
       company_id: sup2.id,
       category_id: catWoodSawdust.id,
@@ -389,6 +371,6 @@ class Database {
   }
 }
 
-// Global singleton instance for Next.js API Routes across invocations
+// Global singleton per warm serverless instance (or per dev-server process).
 const globalForDb = globalThis;
 export const db = globalForDb.bylinkDb || (globalForDb.bylinkDb = new Database());

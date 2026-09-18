@@ -58,13 +58,14 @@ function geoClusters(listings) {
 
 export async function GET(request) {
   try {
+    await db.ready();
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('category_id');
     const city = searchParams.get('city');
     const statusFilter = searchParams.get('status_filter'); // if not provided, default to active
     const shouldAggregate = searchParams.get('aggregate') !== 'false';
 
-    const listings = db.material_listings.find((l) => {
+    const listings = await db.material_listings.find((l) => {
       if (statusFilter && statusFilter !== 'all' && l.status !== statusFilter) return false;
       if (!statusFilter && l.status !== 'active') return false;
       if (categoryId && l.category_id !== categoryId) return false;
@@ -74,9 +75,9 @@ export async function GET(request) {
 
     // If caller explicitly wants raw unaggregated listings (e.g. supplier's own raw records)
     if (!shouldAggregate) {
-      const sanitized = listings.map((l) => {
-        const category = db.categories.findById(l.category_id);
-        const comp = l.company_id ? db.companies.findById(l.company_id) : null;
+      const sanitized = await Promise.all(listings.map(async (l) => {
+        const category = await db.categories.findById(l.category_id);
+        const comp = l.company_id ? await db.companies.findById(l.company_id) : null;
         return {
           id: l.id,
           category_id: l.category_id,
@@ -97,7 +98,7 @@ export async function GET(request) {
           supplier_company_name: comp?.name || 'Mitra Pemasok',
           created_at: l.created_at,
         };
-      });
+      }));
       return NextResponse.json(sanitized);
     }
 
@@ -117,7 +118,7 @@ export async function GET(request) {
 
     for (const [gradeKey, groupListings] of gradeGroupMap.entries()) {
       const [catId, grade] = gradeKey.split('__');
-      const category = db.categories.findById(catId);
+      const category = await db.categories.findById(catId);
 
       const geoClustered = geoClusters(groupListings);
 
@@ -152,7 +153,7 @@ export async function GET(request) {
           const qty = Number(l.available_quantity) || 0;
           const iQty = Number(l.initial_quantity) || qty;
           const unitPrice = Number(l.price_per_unit) || 800;
-          const supplierComp = l.company_id ? db.companies.findById(l.company_id) : null;
+          const supplierComp = l.company_id ? await db.companies.findById(l.company_id) : null;
 
           availableQty += qty;
           initialQty += iQty;

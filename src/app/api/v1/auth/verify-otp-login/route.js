@@ -6,6 +6,7 @@ import { normalizePhone } from '@/lib/phone';
 
 export async function POST(request) {
   try {
+    await db.ready();
     const body = await request.json().catch(() => ({}));
     const rawPhone = body.phone || '';
     const phone = normalizePhone(rawPhone);
@@ -21,7 +22,7 @@ export async function POST(request) {
     }
 
     // 1. Check if user already exists in database
-    let user = db.users.findOne((u) => normalizePhone(u.phone) === phone);
+    let user = await db.users.findOne((u) => normalizePhone(u.phone) === phone);
 
     // 2. Check if user was registered on client side via X-Registered-Accounts header
     if (!user) {
@@ -31,9 +32,9 @@ export async function POST(request) {
           const registeredList = JSON.parse(regAccountsHeader);
           const matched = (registeredList || []).find((a) => normalizePhone(a.phone) === phone);
           if (matched) {
-            let comp = matched.company_id ? db.companies.findById(matched.company_id) : null;
+            let comp = matched.company_id ? await db.companies.findById(matched.company_id) : null;
             if (!comp) {
-              comp = db.companies.create({
+              comp = await db.companies.create({
                 id: matched.company_id || undefined,
                 name: matched.company_name || 'UD Pemasok Biomassa',
                 company_type: matched.role === 'buyer_admin' ? 'enterprise_buyer' : 'umkm_supplier',
@@ -50,7 +51,7 @@ export async function POST(request) {
             }
 
             const pwdHash = await hashPassword('wa_otp_secure_login');
-            user = db.users.create({
+            user = await db.users.create({
               email: matched.email || `wa_${phone}@reusource.id`,
               password_hash: pwdHash,
               full_name: matched.full_name || 'Mitra Penanggung Jawab',
@@ -68,7 +69,7 @@ export async function POST(request) {
 
     // 3. Auto-provision seamless onboarding for any new verified WhatsApp number
     if (!user) {
-      const comp = db.companies.create({
+      const comp = await db.companies.create({
         name: `UD Mitra Biomassa (${phone.slice(-4)})`,
         company_type: 'umkm_supplier',
         phone: phone,
@@ -84,7 +85,7 @@ export async function POST(request) {
       });
 
       const pwdHash = await hashPassword('wa_otp_secure_login');
-      user = db.users.create({
+      user = await db.users.create({
         email: `wa_${phone}@reusource.id`,
         password_hash: pwdHash,
         full_name: `Penanggung Jawab (${phone})`,
@@ -95,7 +96,7 @@ export async function POST(request) {
       });
     }
 
-    const company = user.company_id ? db.companies.findById(user.company_id) : null;
+    const company = user.company_id ? await db.companies.findById(user.company_id) : null;
     const token = await createAccessToken(user.id);
 
     return NextResponse.json({

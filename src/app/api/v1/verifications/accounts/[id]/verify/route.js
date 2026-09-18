@@ -8,7 +8,7 @@ export async function POST(request, { params }) {
     await requireRoles(request, ['admin', 'verifier']);
     const body = await request.json().catch(() => ({}));
 
-    let company = db.companies.findById(id);
+    let company = await db.companies.findById(id);
 
     // If not found by direct ID (due to serverless lambda split), search in companies list or client header
     if (!company) {
@@ -18,7 +18,7 @@ export async function POST(request, { params }) {
           const registeredList = JSON.parse(regAccountsHeader);
           const matched = (registeredList || []).find((a) => a.company_id === id || a.company_name === id);
           if (matched) {
-            company = db.companies.create({
+            company = await db.companies.create({
               id: matched.company_id || id,
               name: matched.company_name || 'Usaha Terdaftar',
               company_type: matched.role === 'buyer_admin' ? 'enterprise_buyer' : 'umkm_supplier',
@@ -52,7 +52,7 @@ export async function POST(request, { params }) {
         ? 'Dokumen legalitas & verifikasi lokasi fisik valid (ISO 27001 Lolos).'
         : 'Ditolak: Data tidak memenuhi kriteria verifikasi.');
 
-    const updated = db.companies.update(company.id, {
+    const updated = await db.companies.update(company.id, {
       verification_status: newStatus,
       verification_notes: notes,
     });

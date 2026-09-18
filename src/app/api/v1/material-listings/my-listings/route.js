@@ -5,13 +5,13 @@ import { requireRoles } from '@/lib/auth';
 export async function GET(request) {
   try {
     const currentUser = await requireRoles(request, ['supplier_admin', 'admin', 'supplier']);
-    const listings = db.material_listings.find(
+    const listings = await db.material_listings.find(
       (l) => l.company_id === currentUser.company_id
     );
 
-    const response = listings.map((l) => {
-      const company = db.companies.findById(l.company_id);
-      const category = db.categories.findById(l.category_id);
+    const response = await Promise.all(listings.map(async (l) => {
+      const company = await db.companies.findById(l.company_id);
+      const category = await db.categories.findById(l.category_id);
       return {
         id: l.id,
         company_id: l.company_id,
@@ -33,7 +33,7 @@ export async function GET(request) {
         photos: l.photos || [],
         created_at: l.created_at,
       };
-    });
+    }));
 
     return NextResponse.json(response);
   } catch (error) {

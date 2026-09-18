@@ -1,8 +1,9 @@
 import { db } from './db.js';
 
 export class ImpactCalculatorService {
-  static getImpactDashboardMetrics() {
-    const logs = db.impact_logs.find();
+  static async getImpactDashboardMetrics() {
+    await db.ready();
+    const logs = await db.impact_logs.find();
 
     let totalReused = 0.0;
     let totalCo2 = 0.0;
@@ -16,14 +17,14 @@ export class ImpactCalculatorService {
       totalBuyerSaved += Number(log.buyer_cost_saved || 0);
     }
 
-    const suppliersCount = db.companies.count((c) => c.company_type === 'umkm_supplier');
-    const buyersCount = db.companies.count((c) =>
+    const suppliersCount = await db.companies.count((c) => c.company_type === 'umkm_supplier');
+    const buyersCount = await db.companies.count((c) =>
       ['umkm_buyer', 'enterprise_buyer'].includes(c.company_type)
     );
 
     // Category Breakdown
     const categoryMap = new Map();
-    const categories = db.categories.find();
+    const categories = await db.categories.find();
     for (const cat of categories) {
       categoryMap.set(cat.id, {
         category_name: cat.name,

@@ -27,14 +27,14 @@ export async function POST(request) {
       );
     }
 
-    const buyingReq = db.buying_requests.findById(aggregatedSupply.buying_request_id);
-    const supplyItems = db.aggregated_supply_items.find(
+    const buyingReq = await db.buying_requests.findById(aggregatedSupply.buying_request_id);
+    const supplyItems = await db.aggregated_supply_items.find(
       (item) => item.aggregated_supply_id === aggregatedSupply.id
     );
 
-    const itemsRes = supplyItems.map((item) => {
-      const listing = db.material_listings.findById(item.material_listing_id);
-      const supplierCompany = listing ? db.companies.findById(listing.company_id) : null;
+    const itemsRes = await Promise.all(supplyItems.map(async (item) => {
+      const listing = await db.material_listings.findById(item.material_listing_id);
+      const supplierCompany = listing ? await db.companies.findById(listing.company_id) : null;
       return {
         id: item.id,
         material_listing_id: item.material_listing_id,
@@ -46,7 +46,7 @@ export async function POST(request) {
         subtotal: item.subtotal,
         distance_km: item.distance_km,
       };
-    });
+    }));
 
     return NextResponse.json(
       {

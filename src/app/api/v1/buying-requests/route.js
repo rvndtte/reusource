@@ -3,19 +3,20 @@ import { db } from '@/lib/db';
 
 export async function GET(request) {
   try {
+    await db.ready();
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('category_id');
     const buyerCompanyId = searchParams.get('buyer_company_id');
 
-    const requests = db.buying_requests.find((r) => {
+    const requests = await db.buying_requests.find((r) => {
       if (categoryId && r.category_id !== categoryId) return false;
       if (buyerCompanyId && r.buyer_company_id !== buyerCompanyId) return false;
       return true;
     });
 
-    const response = requests.map((r) => {
-      const buyerCompany = db.companies.findById(r.buyer_company_id);
-      const category = db.categories.findById(r.category_id);
+    const response = await Promise.all(requests.map(async (r) => {
+      const buyerCompany = await db.companies.findById(r.buyer_company_id);
+      const category = await db.categories.findById(r.category_id);
       return {
         id: r.id,
         buyer_company_id: r.buyer_company_id,
@@ -35,7 +36,7 @@ export async function GET(request) {
         status: r.status,
         created_at: r.created_at,
       };
-    });
+    }));
 
     return NextResponse.json(response);
   } catch (error) {
@@ -48,6 +49,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    await db.ready();
     const { searchParams } = new URL(request.url);
     const buyerCompanyId = searchParams.get('company_id') || searchParams.get('buyer_company_id');
     const body = await request.json().catch(() => ({}));
@@ -60,7 +62,7 @@ export async function POST(request) {
       );
     }
 
-    const company = db.companies.findById(companyId);
+    const company = await db.companies.findById(companyId);
     if (!company) {
       return NextResponse.json(
         { detail: 'Buyer company not found' },
@@ -68,19 +70,19 @@ export async function POST(request) {
       );
     }
 
-    let category = body.category_id ? db.categories.findById(body.category_id) : null;
+    let category = body.category_id ? await db.categories.findById(body.category_id) : null;
     if (!category) {
       const searchKey = (body.waste_type || body.title || '').toLowerCase();
-      category = db.categories.findOne((c) =>
+      category = await db.categories.findOne((c) =>
         searchKey.includes(c.name.toLowerCase().split(' ')[0]) ||
         c.name.toLowerCase().includes(searchKey.split(' ')[0])
       );
     }
     if (!category) {
-      category = db.categories.findOne(() => true);
+      category = await db.categories.findOne(() => true);
     }
     if (!category) {
-      category = db.categories.create({
+      category = await db.categories.create({
         id: 'cat-wood-001',
         name: 'Serbuk Serutan Kayu Jati',
         description: 'Biomassa serbuk gergaji dan serutan kayu jati industri',
@@ -89,7 +91,7 @@ export async function POST(request) {
       });
     }
 
-    const buyingReq = db.buying_requests.create({
+    const buyingReq = await db.buying_requests.create({
       buyer_company_id: company.id,
       category_id: category.id,
       title: body.title || `Permintaan Pasokan ${category.name}`,
