@@ -115,11 +115,10 @@ export default function BuyerKatalog({ onNavigateToOrders }) {
     loadListings();
   }, [loadListings]);
 
-  // Filter Logic
+  // Filter Logic (radius tidak lagi menyembunyikan kluster, hanya menonaktifkan tombol beli)
   const filteredClusters = clusters.filter((cluster) => {
     if (filterType !== 'Semua' && cluster.wasteType !== filterType) return false;
     if (filterGrade !== 'Semua' && cluster.grade !== filterGrade) return false;
-    if (cluster.radiusKm > filterRadius) return false;
     if (filterStatus !== 'Semua' && cluster.status !== filterStatus) return false;
     return true;
   });
@@ -313,6 +312,8 @@ export default function BuyerKatalog({ onNavigateToOrders }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
           {filteredClusters.map((cluster) => {
             const isReady = cluster.status === 'Siap Dijual';
+            const isWithinRadius = cluster.radiusKm <= filterRadius;
+            const canPurchase = isReady && isWithinRadius;
             const priceEst = calculateEconomicValue(cluster.wasteType, cluster.grade, cluster.totalVolumeKg);
             const co2Est = calculateCO2eImpact(cluster.wasteType, cluster.totalVolumeKg);
 
@@ -381,6 +382,12 @@ export default function BuyerKatalog({ onNavigateToOrders }) {
                       </strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Jarak dari Pabrik Anda:</span>
+                      <strong style={{ color: isWithinRadius ? '#059669' : '#dc2626' }}>
+                        {cluster.radiusKm} km {isWithinRadius ? '(Dalam Radius)' : '(Di Luar Radius)'}
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Kadar Air (Spesifikasi):</span>
                       <strong style={{ color: 'var(--text-dark)' }}>{cluster.moisture}</strong>
                     </div>
@@ -426,17 +433,26 @@ export default function BuyerKatalog({ onNavigateToOrders }) {
                   </div>
 
                   <button
-                    onClick={() => handleOpenCheckout(cluster)}
+                    onClick={() => canPurchase && handleOpenCheckout(cluster)}
+                    disabled={!canPurchase}
+                    title={
+                      !isWithinRadius
+                        ? `Di luar radius jangkauan (${cluster.radiusKm} km > ${filterRadius} km)`
+                        : !isReady
+                        ? 'Kluster belum mencapai volume siap jual'
+                        : undefined
+                    }
                     style={{
                       padding: '0.65rem 1.25rem',
                       borderRadius: '8px',
-                      backgroundColor: isReady ? 'var(--primary-blue)' : '#64748b',
+                      backgroundColor: canPurchase ? 'var(--primary-blue)' : '#94a3b8',
                       color: '#ffffff',
                       fontWeight: 800,
                       fontSize: '0.85rem',
                       border: 'none',
-                      cursor: 'pointer',
-                      boxShadow: isReady ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none',
+                      cursor: canPurchase ? 'pointer' : 'not-allowed',
+                      boxShadow: canPurchase ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none',
+                      opacity: canPurchase ? 1 : 0.75,
                     }}
                   >
                     Beli Pasokan
