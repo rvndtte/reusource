@@ -202,6 +202,12 @@ export const buyerApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  createOrder: (payload) =>
+    request('/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
 
 // 4. ADMIN & VERIFIER APIS

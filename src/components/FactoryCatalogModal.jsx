@@ -9,8 +9,31 @@ const CLUSTER_CATALOG = [
 
 export default function FactoryCatalogModal({ isOpen, onClose }) {
   const [orderedId, setOrderedId] = useState(null);
+  const [liveClusters, setLiveClusters] = useState([]);
 
-  if (!isOpen) return null;
+  React.useEffect(() => {
+    if (!isOpen) return;
+    fetch('/api/v1/material-listings')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setLiveClusters(data);
+        }
+      })
+      .catch((e) => console.warn('Live catalog fetch error:', e));
+  }, [isOpen]);
+
+  const displayItems = liveClusters.length > 0
+    ? liveClusters.map((c) => ({
+        id: c.id,
+        name: c.cluster_name || c.title,
+        volumeTon: `${(c.available_quantity / 1000).toFixed(2)} Ton (${c.available_quantity} kg)`,
+        caloricValue: '4,350 kcal/kg (SNI)',
+        moisture: c.grade_spec?.grade === 'A' ? '≤ 12.5%' : '18.0%',
+        status: c.is_ready_for_sale ? 'Ready Pickup' : 'Agregasi Berjalan',
+        eta: 'Besok, 09:00 WIB (Milk-Run)',
+      }))
+    : CLUSTER_CATALOG;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -67,7 +90,7 @@ export default function FactoryCatalogModal({ isOpen, onClose }) {
 
         {/* Catalog Items */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-          {CLUSTER_CATALOG.map((item) => (
+          {displayItems.map((item) => (
             <div
               key={item.id}
               style={{

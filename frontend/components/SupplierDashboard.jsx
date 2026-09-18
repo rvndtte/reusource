@@ -58,10 +58,10 @@ export default function SupplierDashboard() {
             let step = 1;
             let statusText = 'Menunggu Kluster';
 
-            if (l.status === 'completed' || l.status === 'sold') {
+            if (l.status === 'completed' || l.status === 'sold' || l.status === 'sold_out') {
               step = 4;
               statusText = 'Terjual';
-            } else if (l.status === 'in_delivery' || l.status === 'matched') {
+            } else if (l.status === 'in_delivery' || l.status === 'matched' || l.status === 'partially_aggregated') {
               step = 3;
               statusText = 'Siap Diambil';
             } else if (isClusterReady || (Number(l.available_quantity) >= 500)) {
@@ -69,15 +69,17 @@ export default function SupplierDashboard() {
               statusText = 'Kluster Terbentuk';
             }
 
+            const soldWeight = l.initial_quantity ?? l.available_quantity;
+
             return {
               id: l.id.slice(0, 8),
               date: l.created_at ? l.created_at.split('T')[0] : '2026-09-05',
               wasteType: l.title.split(' (Grade')[0] || l.title,
-              weight: l.available_quantity,
+              weight: soldWeight,
               grade: l.grade_spec?.grade || 'A',
               statusStep: step,
               statusLabel: statusText,
-              nominal: l.available_quantity * (l.price_per_unit || 800)
+              nominal: soldWeight * (l.price_per_unit || 800)
             };
           })
         );

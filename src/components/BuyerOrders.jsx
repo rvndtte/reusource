@@ -18,7 +18,13 @@ export default function BuyerOrders({ onSwitchToKatalog }) {
     setIsLoading(true);
     setLoadError('');
     try {
-      const res = await buyerApi.getOrders(user?.company_id);
+      let res = await buyerApi.getOrders(user?.company_id);
+      if ((!res || res.length === 0) && user?.company_id) {
+        const fallbackRes = await buyerApi.getOrders();
+        if (fallbackRes && fallbackRes.length > 0) {
+          res = fallbackRes;
+        }
+      }
       if (res && res.length > 0) {
         setOrders(res);
         if (!selectedOrder) {

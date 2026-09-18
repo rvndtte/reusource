@@ -161,6 +161,37 @@ class Database {
           this.order_items.loadAll(data.order_items);
           this.verifications.loadAll(data.verifications);
           this.impact_logs.loadAll(data.impact_logs);
+
+          // Auto-upgrade missing essential test accounts/requests
+          if (!this.users.findById('usr-demo-verifier')) {
+            this.users.create({
+              id: 'usr-demo-verifier',
+              email: 'verifier@reusource.id',
+              password_hash: DEMO_PASSWORD_HASH,
+              full_name: 'Audit Verifikator Lapangan',
+              phone: '081122334455',
+              role: 'verifier',
+              company_id: 'comp-sup-cimahi',
+              is_active: true,
+            });
+          }
+          if (!this.buying_requests.findById('req-001')) {
+            this.buying_requests.create({
+              id: 'req-001',
+              buyer_company_id: 'comp-buy-nusantara',
+              category_id: 'cat-wood-001',
+              target_quantity: 500.0,
+              fulfilled_quantity: 0.0,
+              unit: 'kg',
+              max_price_per_unit: 1000.0,
+              delivery_address: 'Kawasan Industri GIIC Cikarang',
+              latitude: -6.3005,
+              longitude: 107.1690,
+              required_grade: 'A',
+              status: 'open',
+            });
+          }
+
           return true;
         }
       }
@@ -246,6 +277,17 @@ class Database {
     });
 
     this.users.create({
+      id: 'usr-demo-verifier',
+      email: 'verifier@reusource.id',
+      password_hash: DEMO_PASSWORD_HASH,
+      full_name: 'Audit Verifikator Lapangan',
+      phone: '081122334455',
+      role: 'verifier',
+      company_id: sup1.id,
+      is_active: true,
+    });
+
+    this.users.create({
       id: 'usr-demo-sup',
       email: 'test@supplier.com',
       password_hash: DEMO_PASSWORD_HASH,
@@ -278,7 +320,23 @@ class Database {
       is_active: true,
     });
 
-    // 4. Material Listings (2 Supplier Serbuk Serutan Jati Grade A)
+    // 4. Initial Buying Request for Smart Matching
+    this.buying_requests.create({
+      id: 'req-001',
+      buyer_company_id: buyer1.id,
+      category_id: catWoodSawdust.id,
+      target_quantity: 500.0,
+      fulfilled_quantity: 0.0,
+      unit: 'kg',
+      max_price_per_unit: 1000.0,
+      delivery_address: buyer1.address,
+      latitude: buyer1.latitude,
+      longitude: buyer1.longitude,
+      required_grade: 'A',
+      status: 'open',
+    });
+
+    // 5. Material Listings (2 Supplier Serbuk Serutan Jati Grade A)
     this.material_listings.create({
       id: 'list-001',
       company_id: sup1.id,

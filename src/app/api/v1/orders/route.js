@@ -21,9 +21,9 @@ export async function GET(request) {
         return {
           id: item.id,
           supplier_company_id: item.supplier_company_id,
-          supplier_company_name: supplierCompany?.name || '',
+          supplier_company_name: supplierCompany?.name || 'Mitra UMKM Terverifikasi',
           material_listing_id: item.material_listing_id,
-          listing_title: listing?.title || '',
+          listing_title: listing?.title || 'Pasokan Biomassa Kayu Teragregasi',
           quantity: item.quantity,
           unit_price: item.unit_price,
           subtotal: item.subtotal,
@@ -35,7 +35,7 @@ export async function GET(request) {
         aggregated_supply_id: o.aggregated_supply_id,
         buying_request_id: o.buying_request_id,
         buyer_company_id: o.buyer_company_id,
-        buyer_company_name: buyerCompany?.name || '',
+        buyer_company_name: buyerCompany?.name || 'PT Pembeli Industri',
         total_amount: o.total_amount,
         platform_fee: o.platform_fee,
         order_status: o.order_status,
@@ -57,75 +57,125 @@ export async function POST(request) {
   try {
     const { searchParams } = new URL(request.url);
     const body = await request.json().catch(() => ({}));
-    const buyerCompanyId = body.buyer_company_id || searchParams.get('buyer_company_id') || searchParams.get('company_id');
+    const buyerCompanyId = body.buyer_company_id || searchParams.get('buyer_company_id') || searchParams.get('company_id') || 'comp-buy-nusantara';
 
     // Case 1: Direct purchase of listing / cluster from Buyer Catalog
-    if (body.material_listing_id || body.listing_id) {
-      const listingId = body.material_listing_id || body.listing_id;
-      const listing = db.material_listings.findById(listingId);
-      if (!listing) {
-        return NextResponse.json({ detail: 'Material listing not found' }, { status: 404 });
+    if (body.material_listing_id || body.listing_id || body.cluster_id || body.listing_ids) {
+      let targetListings = [];
+
+      // If specific listing IDs are provided (from an aggregated cluster)
+      if (Array.isArray(body.listing_ids) && body.listing_ids.length > 0) {
+        targetListings = body.listing_ids
+          .map((id) => db.material_listings.findById(id))
+          .filter((l) => l && l.available_quantity > 0);
+      } else {
+        const idToCheck = body.material_listing_id || body.listing_id || body.cluster_id;
+        const single = db.material_listings.findById(idToCheck);
+        if (single) {
+          targetListings = [single];
+        } else {
+          // Check if idToCheck is a cluster prefix (e.g. KLS-CIM-A-...)
+          const activeListings = db.material_listings.find((l) => l.status === 'active' && l.available_quantity > 0);
+          targetListings = activeListings;
+        }
       }
 
-      const qty = Number(body.quantity || listing.available_quantity || 100);
-      const pricePerKg = Number(listing.price_per_unit || (listing.grade_spec?.grade === 'A' ? 800 : 450));
-      const totalAmount = qty * pricePerKg;
-      const fee = totalAmount * 0.03;
+      if (targetListings.length === 0) {
+        return NextResponse.json(
+          { detail: 'Tidak ada pasokan biomassa aktif yang tersedia untuk dibeli.' },
+          { status: 404 }
+        );
+      }
 
+      const totalAvailable = targetListings.reduce((sum, l) => sum + Number(l.available_quantity || 0), 0);
+      const requestedQty = Number(body.quantity) > 0 ? Number(body.quantity) : totalAvailable;
+      let remainingToBuy = Math.min(requestedQty, totalAvailable);
+
+      // Create Order
       const order = db.orders.create({
-        buyer_company_id: buyerCompanyId || 'comp-buy-001',
-        total_amount: totalAmount + fee,
-        platform_fee: fee,
+        buyer_company_id: buyerCompanyId,
+        total_amount: 0,
+        platform_fee: 0,
         order_status: 'in_delivery', // Live Milk-Run delivery status
       });
 
-      const supplierCompany = listing.company_id ? db.companies.findById(listing.company_id) : null;
+      let totalMaterialCost = 0.0;
+      let totalPurchasedQty = 0.0;
+      const createdItems = [];
 
-      db.order_items.create({
-        order_id: order.id,
-        supplier_company_id: listing.company_id,
-        material_listing_id: listing.id,
-        quantity: qty,
-        unit_price: pricePerKg,
-        subtotal: totalAmount,
-      });
+      // Allocate across target listings FIFO
+      for (const listing of targetListings) {
+        if (remainingToBuy <= 0) break;
 
-      // Update listing remaining quantity
-      const newQty = Math.max(0.0, listing.available_quantity - qty);
-      db.material_listings.update(listing.id, {
-        available_quantity: newQty,
-        status: newQty === 0 ? 'sold_out' : 'active',
+        const takeQty = Math.min(listing.available_quantity, remainingToBuy);
+        if (takeQty <= 0) continue;
+
+        const pricePerKg = Number(listing.price_per_unit || 800.0);
+        const subtotal = takeQty * pricePerKg;
+        const supplierCompany = listing.company_id ? db.companies.findById(listing.company_id) : null;
+
+        const orderItem = db.order_items.create({
+          order_id: order.id,
+          supplier_company_id: listing.company_id,
+          material_listing_id: listing.id,
+          quantity: takeQty,
+          unit_price: pricePerKg,
+          subtotal: subtotal,
+        });
+
+        createdItems.push({
+          material_listing_id: listing.id,
+          listing_title: listing.title,
+          supplier_company_name: supplierCompany?.name || 'Mitra Pemasok Terverifikasi',
+          quantity: takeQty,
+          unit_price: pricePerKg,
+          subtotal: subtotal,
+        });
+
+        totalMaterialCost += subtotal;
+        totalPurchasedQty += takeQty;
+        remainingToBuy -= takeQty;
+
+        // Update listing remaining quantity
+        const newQty = Math.max(0.0, listing.available_quantity - takeQty);
+        db.material_listings.update(listing.id, {
+          available_quantity: newQty,
+          status: newQty === 0 ? 'sold_out' : 'active',
+        });
+      }
+
+      const platformFee = Math.round(totalMaterialCost * 0.03 * 100) / 100;
+      const finalTotalAmount = totalMaterialCost + platformFee;
+
+      db.orders.update(order.id, {
+        total_amount: finalTotalAmount,
+        platform_fee: platformFee,
       });
 
       // Create ESG Impact Log
+      const primaryListing = targetListings[0];
+      const grade = primaryListing?.grade_spec?.grade || 'A';
+      const co2eFactor = grade === 'A' ? 1.25 : 1.1;
+
       db.impact_logs.create({
         order_id: order.id,
         buyer_company_id: order.buyer_company_id,
-        category_id: listing.category_id,
-        total_material_reused: qty,
-        co2_avoided_kg: qty * (listing.grade_spec?.grade === 'A' ? 1.25 : 1.1),
-        supplier_revenue_earned: totalAmount,
-        buyer_cost_saved: totalAmount * 0.15,
+        category_id: primaryListing?.category_id || 'cat-wood-001',
+        total_material_reused: totalPurchasedQty,
+        co2_avoided_kg: totalPurchasedQty * co2eFactor,
+        supplier_revenue_earned: totalMaterialCost,
+        buyer_cost_saved: totalMaterialCost * 0.15,
       });
 
       return NextResponse.json(
         {
           id: order.id,
           buyer_company_id: order.buyer_company_id,
-          total_amount: order.total_amount,
-          platform_fee: order.platform_fee,
+          total_amount: finalTotalAmount,
+          platform_fee: platformFee,
           order_status: order.order_status,
           created_at: order.created_at,
-          items: [
-            {
-              material_listing_id: listing.id,
-              listing_title: listing.title,
-              supplier_company_name: supplierCompany?.name || 'Mitra Pemasok Terverifikasi',
-              quantity: qty,
-              unit_price: pricePerKg,
-              subtotal: totalAmount,
-            },
-          ],
+          items: createdItems,
         },
         { status: 201 }
       );
@@ -186,6 +236,17 @@ export async function POST(request) {
     if (buyingReq) {
       db.buying_requests.update(buyingReq.id, { status: 'fulfilled' });
     }
+
+    // ESG log for Case 2
+    db.impact_logs.create({
+      order_id: order.id,
+      buyer_company_id: order.buyer_company_id,
+      category_id: buyingReq?.category_id || 'cat-wood-001',
+      total_material_reused: agg.total_matched_quantity,
+      co2_avoided_kg: agg.total_matched_quantity * 1.25,
+      supplier_revenue_earned: agg.total_material_cost,
+      buyer_cost_saved: agg.total_material_cost * 0.15,
+    });
 
     const createdItems = db.order_items.find((item) => item.order_id === order.id);
     const itemsRes = createdItems.map((item) => {
