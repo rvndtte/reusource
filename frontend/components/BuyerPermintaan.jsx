@@ -81,7 +81,8 @@ export default function BuyerPermintaan() {
     setIsSubmitting(true);
     try {
       if (user?.company_id) {
-        await buyerApi.createBuyingRequest(user.company_id, {
+        await buyerApi.submitBuyingRequest({
+          buyer_company_id: user.company_id,
           title: `Kebutuhan ${demandWasteType} (${targetVolumeKg} kg)`,
           waste_type: demandWasteType,
           target_quantity: Number(targetVolumeKg),
